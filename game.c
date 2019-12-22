@@ -1,13 +1,14 @@
 int initializeGame(Game* game, enum gameType type, int optionnal_rule)
 {
-    if(game != NULL) return 0;
+    if(game == NULL) return 0;
 
     game->active = 0;
     game->turn = 0;
     game->type = type;
     game->hidingTurn = 0;
     game->optionnel = optionnal_rule;
-
+    game->frame = 0;
+    game->cap = 1;
     return 1;
 }
 

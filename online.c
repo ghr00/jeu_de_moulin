@@ -1,25 +1,37 @@
 void getIPAdress(IPaddress* ip, Uint16* port)
 {
-    char* _host;
-    char* _port;
+    const char* _host;
+    const char* _port;
 
-    ini_t* file = ini_load(ONLINE_CONFIG_FILE);
+    ini_t* file = NULL;
 
-    sprintf(_port, "%s", ini_get(file, "Opponent", "Port"));
-    sprintf(_host, "%s", ini_get(file, "Opponent", "IP"));
+    file = ini_load(ONLINE_CONFIG_FILE);
 
-    *port = (Uint16)_port; // à corriger !
+    printf("file %p", file);
+
+    if(file == NULL)
+        printf("Echec du chargement du fichier ONLINE_CONFIG_FILE\n");
+
+    _port = ini_get(file, "Opponent", "Port");
+    _host = ini_get(file, "Opponent", "IP");
+
+    //*port = (Uint16)_port; // à corriger !
+
+    int nbrPort = atoi(_port);
+
+    printf("Poort%d\n", nbrPort);
+    *port = (Uint16)nbrPort;
 
     SDLNet_ResolveHost(ip, _host, *port);
 
     ini_free(file);
 }
 
-UDPsocket initializeConnection(IPaddress* ip, int* port, int* channel)
+UDPsocket initializeConnection(IPaddress* ip, Uint16* port, int* channel)
 {
     UDPsocket udpsock;
 
-    getIPAdress(ip, (int*)port);
+    getIPAdress(ip, port);
 
     udpsock = SDLNet_UDP_Open(*port);
 
@@ -60,7 +72,8 @@ void removePawnMessage(char* str, int vertex)
 void sendMessage(char* message, int len)
 {
     IPaddress ip;
-    int port, channel;
+    Uint16 port;
+    int channel;
 
     UDPsocket udpsock = initializeConnection(&ip, &port, &channel);
 
@@ -70,7 +83,8 @@ void sendMessage(char* message, int len)
     packet->channel = channel;
     packet->data    = (Uint8*)message;
 
-    SDLNet_UDP_Send(udpsock, packet->channel, packet);
+    if(!SDLNet_UDP_Send(udpsock, packet->channel, packet))
+        printf("[Online] Erreur dans l'envoie.");
 
     SDLNet_FreePacket(packet);
 
@@ -82,9 +96,12 @@ void sendMessage(char* message, int len)
 int receiveMessage(char* message, int len, int timeout)
 {
     IPaddress ip;
-    int port, channel;
+    Uint16 port;
+    int channel;
 
     UDPsocket udpsock = initializeConnection(&ip, &port, &channel);
+
+    printf("Port:%d", port);
 
     UDPpacket* packet = SDLNet_AllocPacket(len);
 

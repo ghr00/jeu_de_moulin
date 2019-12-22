@@ -1,7 +1,7 @@
 /* Matrice d'adjacence du plateau du jeu
     Propriétés  :   1. Elle est symetrique.
                     2. Si Adjacency[i][j] = 1, alors il existe un chemin entre le sommet i et sommet j.
-                    3. Si Adjacency[i][j] = 1, alors il n'existe aucun chemin entre le sommet i et sommet j. */
+                    3. Si Adjacency[i][j] = 0, alors il n'existe aucun chemin entre le sommet i et sommet j. */
 int Adjacency[24][24] = {
     {0, 1,  0,  0,  0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0},
     {1, 0,  1,  0,  0,  0,  0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0},

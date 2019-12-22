@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1576866107 source:c:\users\hp\desktop\jeu_de_moulin\scr\main.c
+1577029328 source:c:\users\hp\desktop\jeu_de_moulin\scr\main.c
 	<stdio.h>
 	<stdlib.h>
 	<time.h>
@@ -432,10 +432,10 @@
 
 1575657088 c:\users\hp\desktop\jeu_de_moulin\scr\moulin.c
 
-1575494248 c:\users\hp\desktop\jeu_de_moulin\scr\game.h
+1577029328 c:\users\hp\desktop\jeu_de_moulin\scr\game.h
 	"game.c"
 
-1574963574 c:\users\hp\desktop\jeu_de_moulin\scr\game.c
+1576950692 c:\users\hp\desktop\jeu_de_moulin\scr\game.c
 
 1574704561 c:\users\hp\desktop\jeu_de_moulin\scr\text.h
 	"text.c"
@@ -447,7 +447,7 @@
 
 1575219113 c:\users\hp\desktop\jeu_de_moulin\scr\countdown.c
 
-1575890182 c:\users\hp\desktop\jeu_de_moulin\scr\map.h
+1576949287 c:\users\hp\desktop\jeu_de_moulin\scr\map.h
 	"map.c"
 
 1575890332 c:\users\hp\desktop\jeu_de_moulin\scr\map.c
@@ -474,8 +474,8 @@
 
 1482081915 c:\users\hp\desktop\jeu_de_moulin\scr\ini.h
 
-1576866344 c:\users\hp\desktop\jeu_de_moulin\scr\online.h
+1577028578 c:\users\hp\desktop\jeu_de_moulin\scr\online.h
 	"online.c"
 
-1576866345 c:\users\hp\desktop\jeu_de_moulin\scr\online.c
+1577028838 c:\users\hp\desktop\jeu_de_moulin\scr\online.c
 

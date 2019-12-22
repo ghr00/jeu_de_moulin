@@ -130,7 +130,7 @@ int main(int argc, char *argv[])
 
     Sprite sprites[PLAYER_INITIAL_PAWNS][MAX_PLAYERS];
 
-    int opponent;
+    int opponent = -1; // id de l'adversaire dans le cas d'une partie LAN
 
     if(0 != SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER))
     {
@@ -186,7 +186,7 @@ int main(int argc, char *argv[])
     {
         for(int j = 0; j < MAX_PLAYERS; j++)
         {
-            sprites[i][j].imageFile = "pawn.bmp";
+            sprites[i][j].imageFile = PAWN_FILE;
             sprites[i][j].renderer = renderer;
 
             loadSprite( &(sprites[i][j]) );
@@ -231,6 +231,7 @@ int main(int argc, char *argv[])
     addWidgetToScreen(screen[2], "interface/main_theme.jpg", WIDGET_TYPE_IMAGE, 0, 0, renderer);
     addWidgetToScreen(screen[2], "interface/button_pvp.png", WIDGET_TYPE_BUTTON, 300, 80, renderer);
     addWidgetToScreen(screen[2], "interface/button_pvai.png", WIDGET_TYPE_BUTTON, 400, 80, renderer);
+    addWidgetToScreen(screen[2], "interface/button_lan.png", WIDGET_TYPE_BUTTON, 510, 80, renderer);
     addWidgetToScreen(screen[2], "interface/button_easy.png", WIDGET_TYPE_BUTTON, 300, 180, renderer);
     addWidgetToScreen(screen[2], "interface/button_medium.png", WIDGET_TYPE_BUTTON, 400, 180, renderer);
     addWidgetToScreen(screen[2], "interface/button_no.png", WIDGET_TYPE_BUTTON, 360, 260, renderer);
@@ -243,12 +244,12 @@ int main(int argc, char *argv[])
 
     // Configuration initiale du menu de configuration de la partie
     setWidgetColor(screen[2]->widgets[1+2], green);
-    setWidgetColor(screen[2]->widgets[3+2], grey);
     setWidgetColor(screen[2]->widgets[4+2], grey);
-    setWidgetColor(screen[2]->widgets[5+2], green);
-    setWidgetColor(screen[2]->widgets[6+2], black);
-    setWidgetClickable(screen[2]->widgets[3+2], WIDGET_NOT_CLICKABLE);
+    setWidgetColor(screen[2]->widgets[5+2], grey);
+    setWidgetColor(screen[2]->widgets[6+2], green);
+    setWidgetColor(screen[2]->widgets[7+2], black);
     setWidgetClickable(screen[2]->widgets[4+2], WIDGET_NOT_CLICKABLE);
+    setWidgetClickable(screen[2]->widgets[5+2], WIDGET_NOT_CLICKABLE);
 
     // Initialisation des outils pour la gestion des textes
     turnText        =   createText(renderer, "coolvetica.ttf", 24, "Tour:", 15, 0, black, 1);
@@ -261,7 +262,7 @@ int main(int argc, char *argv[])
     gameConfigText[0]  =   createText(renderer, "coolvetica.ttf", 24, "Type de la partie", 80, 80, black, 0);
     gameConfigText[1]  =   createText(renderer, "coolvetica.ttf", 24, "Niveau de l'IA", 80, 180, black, 0);
     gameConfigText[2]  =   createText(renderer, "coolvetica.ttf", 24, "Activer la regle optionnelle", 80, 280, black, 0);
-    gameConfigText[3]  =   createText(renderer, "coolvetica.ttf", 24, "Theme du plateau", 80, 380, black, 0);
+    gameConfigText[3]  =   createText(renderer, "coolvetica.ttf", 24, "Theme du platefau", 80, 380, black, 0);
 
     // Initilisation de la partie & joueurs
     initializePlayer( &(game.players[0]), "joueur", blue); // blue est la couleur du pion du premier joueur
@@ -280,15 +281,15 @@ int main(int argc, char *argv[])
     focusedVertex[1] = NULL;
 
     // Initialisation des parametres de la partie
-    //initializeGame(&game, GAME_TYPE_PvP, 1);
+    initializeGame(&game, GAME_TYPE_PvP, 1);
 
-    game.active = 0;
+    /*game.active = 0;
     game.turn = 0;
     game.type = GAME_TYPE_PvP;
     game.hidingTurn = 0;
     game.optionnel = 1;
     game.frame = 0;
-    game.cap = 1;
+    game.cap = 1;*/
 
     // Initilisation des trois carrés formant le plateau du jeu
     initializeSquares(renderer);
@@ -400,12 +401,13 @@ int main(int argc, char *argv[])
 
                                     setWidgetColor(screen[menu]->widgets[i], green);
                                     setWidgetColor(screen[menu]->widgets[i+1], white);
+                                    setWidgetColor(screen[menu]->widgets[i+2], white);
 
-                                    setWidgetColor(screen[menu]->widgets[3+2], grey);
                                     setWidgetColor(screen[menu]->widgets[4+2], grey);
+                                    setWidgetColor(screen[menu]->widgets[5+2], grey);
 
-                                    setWidgetClickable(screen[menu]->widgets[3+2], WIDGET_NOT_CLICKABLE);
                                     setWidgetClickable(screen[menu]->widgets[4+2], WIDGET_NOT_CLICKABLE);
+                                    setWidgetClickable(screen[menu]->widgets[5+2], WIDGET_NOT_CLICKABLE);
                                 }
                                 break;
                             }
@@ -418,6 +420,7 @@ int main(int argc, char *argv[])
 
                                     setWidgetColor(screen[menu]->widgets[i-1], white);
                                     setWidgetColor(screen[menu]->widgets[i], green);
+                                    setWidgetColor(screen[menu]->widgets[i+1], white);
 
                                     setWidgetColor(screen[menu]->widgets[3+2], white);
                                     setWidgetColor(screen[menu]->widgets[4+2], white);
@@ -428,7 +431,26 @@ int main(int argc, char *argv[])
                                 break;
                             }
 
-                            case 3+2: // facile
+                            case 3+2: // pvp_lan
+                            {
+                                if(game.type != GAME_TYPE_PvP_ONLINE)
+                                {
+                                    game.type = GAME_TYPE_PvP_ONLINE;
+
+                                    setWidgetColor(screen[menu]->widgets[i], green);
+                                    setWidgetColor(screen[menu]->widgets[i-1], white);
+                                    setWidgetColor(screen[menu]->widgets[i-2], white);
+
+                                    setWidgetColor(screen[menu]->widgets[4+2], grey);
+                                    setWidgetColor(screen[menu]->widgets[5+2], grey);
+
+                                    setWidgetClickable(screen[menu]->widgets[4+2], WIDGET_NOT_CLICKABLE);
+                                    setWidgetClickable(screen[menu]->widgets[5+2], WIDGET_NOT_CLICKABLE);
+                                }
+                                break;
+                            }
+
+                            case 4+2: // facile
                             {
                                 if(game.type == GAME_TYPE_PvAI)
                                 {
@@ -442,7 +464,7 @@ int main(int argc, char *argv[])
                                 break;
                             }
 
-                            case 4+2: // moyen
+                            case 5+2: // moyen
                             {
                                 if(game.type == GAME_TYPE_PvAI)
                                 {
@@ -455,7 +477,7 @@ int main(int argc, char *argv[])
                                 break;
                             }
 
-                            case 5+2: // regle oui
+                            case 6+2: // regle oui
                             {
                                 game.optionnel = 1;
 
@@ -466,7 +488,7 @@ int main(int argc, char *argv[])
                                 break;
                             }
 
-                            case 6+2: // regle non
+                            case 7+2: // regle non
                             {
                                 game.optionnel = 0;
 
@@ -477,7 +499,7 @@ int main(int argc, char *argv[])
                                 break;
                             }
 
-                            case 7+2: // theme_0
+                            case 8+2: // theme_0
                             {
                                 setWidgetVisible(screen[1]->widgets[BOARD_THEME_0], 1);
                                 setWidgetVisible(screen[1]->widgets[BOARD_THEME_1], 0);
@@ -485,7 +507,7 @@ int main(int argc, char *argv[])
                                 break;
                             }
 
-                            case 8+2: // theme_1
+                            case 9+2: // theme_1
                             {
                                 setWidgetVisible(screen[1]->widgets[BOARD_THEME_0], 0);
                                 setWidgetVisible(screen[1]->widgets[BOARD_THEME_1], 1);
@@ -493,7 +515,7 @@ int main(int argc, char *argv[])
                                 break;
                             }
 
-                            case 9+2: // theme_2
+                            case 10+2: // theme_2
                             {
                                 setWidgetVisible(screen[1]->widgets[BOARD_THEME_0], 0);
                                 setWidgetVisible(screen[1]->widgets[BOARD_THEME_1], 0);
@@ -501,7 +523,7 @@ int main(int argc, char *argv[])
                                 break;
                             }
 
-                            case 10+2:
+                            case 11+2:
                             {
                                 menu = MENU_GAME;
 
@@ -517,7 +539,7 @@ int main(int argc, char *argv[])
                                 break;
                             }
 
-                            case 11+2:
+                            case 12+2:
                             {
                                 menu = MENU_START;
                                 break;
@@ -716,6 +738,17 @@ int main(int argc, char *argv[])
                                                 int ai = 1 - id;
 
                                                 ai_positionment(ai, placed);
+                                            }
+
+                                            // [LAN]
+                                            else if(game.type == GAME_TYPE_PvP_ONLINE)
+                                            {
+                                                char message[5];
+
+                                                vertexOwnerMessage(message, id, i);
+
+                                                sendMessage(message, 5);
+
                                             }
                                         }
 
@@ -954,55 +987,69 @@ int main(int argc, char *argv[])
 
             //if(timer == -1) timer = SDL_AddTimer(30, moveSprites, ped); /* Démarrage du timer */
 
+            // [LAN]
             if(game.type == GAME_TYPE_PvP_ONLINE)
             {
+                printf("_______________ LAN _________________ \n");
                 int id = convertTurn( game.turn );
+
+                if(opponent == -1)
+                    opponent = 1 - id;
 
                 if(id != opponent)
                 {
                     char message[5];
 
-                    receiveMessage(message, 5, 10000);
+                    int reception = receiveMessage(message, 5, 10000);
 
-                    char type = message[0];
+                    printf("reception : %d\n", reception);
 
-                    if(type != '\0')
+                    if(reception == 1)
                     {
-                        int vertex;
+                        char type = message[0];
 
-                        sscanf(message, "%d", vertex);
-
-                        switch(type)
+                        if(type != '\0')
                         {
-                            case 'o': // positionnement d'un pion
-                            {
-                                break;
-                            }
+                            int vertex;
 
-                            case 'p': // positionnement d'un pion
-                            {
-                                break;
-                            }
+                            sscanf(message, "%d", &vertex);
 
-                            case 'm': // mouvement d'un pion
+                            switch(type)
                             {
-                                break;
-                            }
+                                case 'o': // positionnement d'un pion
+                                {
+                                    printf("Positionnement d'un pion.");
+                                    break;
+                                }
 
-                            case 'r': // suppression d'un pion
-                            {
-                                break;
-                            }
+                                case 'p': // positionnement d'un pion
+                                {
+                                    break;
+                                }
 
-                            default:
-                                printf("\tLe type de message recu est non reconnu.");
+                                case 'm': // mouvement d'un pion
+                                {
+                                    break;
+                                }
+
+                                case 'r': // suppression d'un pion
+                                {
+                                    break;
+                                }
+
+                                default:
+                                    printf("\tLe type de message recu est non reconnu.");
+                            }
+                        }
+
+                        else
+                        {
+                            printf("\tLe message reçu est vide.\n");
                         }
                     }
 
                     else
-                    {
-                        printf("\tLe message reçu est vide.\n");
-                    }
+                        printf("\tErreur dans la reception du message, %d\n", reception);
                 }
             }
             if(isPlayerAI(game.players[0]))
@@ -1701,21 +1748,15 @@ void ai_moulin(int ai, int moulinID)
 
 void resetGame()
 {
-    game.active = 0;
-    game.turn = 0;
-    game.type = GAME_TYPE_PvP;
-    game.hidingTurn = 0;
-    game.optionnel = 1;
-    game.frame = 0;
-    game.cap = 1;
+    initializeGame(&game, GAME_TYPE_PvP, 1);
 
     setWidgetColor(screen[2]->widgets[1+2], green);
-    setWidgetColor(screen[2]->widgets[3+2], grey);
     setWidgetColor(screen[2]->widgets[4+2], grey);
-    setWidgetColor(screen[2]->widgets[5+2], green);
-    setWidgetColor(screen[2]->widgets[6+2], black);
-    setWidgetClickable(screen[2]->widgets[3+2], WIDGET_NOT_CLICKABLE);
+    setWidgetColor(screen[2]->widgets[5+2], grey);
+    setWidgetColor(screen[2]->widgets[6+2], green);
+    setWidgetColor(screen[2]->widgets[7+2], black);
     setWidgetClickable(screen[2]->widgets[4+2], WIDGET_NOT_CLICKABLE);
+    setWidgetClickable(screen[2]->widgets[5+2], WIDGET_NOT_CLICKABLE);
 
     changeTextValue(turnText, "Tour:");
     changeTextValue(playerText, "Joueur:");
