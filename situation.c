@@ -190,7 +190,7 @@ Situation* generateSituation(Situation* parent, int moulin, int cible)
     if(parent != NULL) newElement->parent = parent;
     newElement->value = 0;
 
-    int id = convertTurn(newElement->game.turn);
+    //int id = convertTurn(newElement->game.turn);
 
     //printf("active[0] = %d\n", game->players[0].activePawns);
     //printf("active[1] = %d\n", game->players[1].activePawns);
@@ -548,7 +548,7 @@ void getActivePawns(Situation* situation, int* p1, int id1, int* p2, int id2)
     const char* s2;
     const char* s3;
 
-    for(int i; i < MAX_VERTICES; i++)
+    for(int i = 0; i < MAX_VERTICES; i++)
     {
         if(situation->vertices[i]->owner == NULL) continue;
 

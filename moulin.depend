@@ -1,5 +1,14 @@
 # depslib dependency file v1.0
-1577029328 source:c:\users\hp\desktop\jeu_de_moulin\scr\main.c
+1482081915 source:c:\users\hp\desktop\jeu_de_moulin\scr\ini.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<ctype.h>
+	"ini.h"
+
+1482081915 c:\users\hp\desktop\jeu_de_moulin\scr\ini.h
+
+1578253595 source:c:\users\hp\desktop\jeu_de_moulin\scr\main.c
 	<stdio.h>
 	<stdlib.h>
 	<time.h>
@@ -8,7 +17,13 @@
 	<SDL2/SDL_ttf.h>
 	<SDL2/SDL_image.h>
 	<SDL2/SDL_mixer.h>
-	<SDL2/SDL_net.h>
+	<winsock2.h>
+	<sys/types.h>
+	<sys/socket.h>
+	<netinet/in.h>
+	<arpa/inet.h>
+	<unistd.h>
+	<netdb.h>
 	"ini.h"
 	"sprite.h"
 	"widget.h"
@@ -392,6 +407,14 @@
 	"begin_code.h"
 	"close_code.h"
 
+1451811446 c:\users\hp\desktop\jeu_de_moulin\sdl\i686-w64-mingw32\include\sdl2\sdl_net.h
+	<stdint.h>
+	"SDL.h"
+	"SDL_endian.h"
+	"SDL_version.h"
+	"begin_code.h"
+	"close_code.h"
+
 1574599622 c:\users\hp\desktop\jeu_de_moulin\scr\sprite.h
 	"sprite.c"
 
@@ -405,7 +428,7 @@
 1575493353 c:\users\hp\desktop\jeu_de_moulin\scr\screen.h
 	"screen.c"
 
-1575323924 c:\users\hp\desktop\jeu_de_moulin\scr\screen.c
+1577273956 c:\users\hp\desktop\jeu_de_moulin\scr\screen.c
 
 1575893254 c:\users\hp\desktop\jeu_de_moulin\scr\player.h
 	"player.c"
@@ -417,7 +440,7 @@
 
 1575058175 c:\users\hp\desktop\jeu_de_moulin\scr\ai.c
 
-1575912129 c:\users\hp\desktop\jeu_de_moulin\scr\vertex.h
+1577620421 c:\users\hp\desktop\jeu_de_moulin\scr\vertex.h
 	"vertex.c"
 
 1575657414 c:\users\hp\desktop\jeu_de_moulin\scr\vertex.c
@@ -432,10 +455,10 @@
 
 1575657088 c:\users\hp\desktop\jeu_de_moulin\scr\moulin.c
 
-1577029328 c:\users\hp\desktop\jeu_de_moulin\scr\game.h
+1577481111 c:\users\hp\desktop\jeu_de_moulin\scr\game.h
 	"game.c"
 
-1576950692 c:\users\hp\desktop\jeu_de_moulin\scr\game.c
+1577481294 c:\users\hp\desktop\jeu_de_moulin\scr\game.c
 
 1574704561 c:\users\hp\desktop\jeu_de_moulin\scr\text.h
 	"text.c"
@@ -455,27 +478,10 @@
 1576329524 c:\users\hp\desktop\jeu_de_moulin\scr\situation.h
 	"situation.c"
 
-1576329200 c:\users\hp\desktop\jeu_de_moulin\scr\situation.c
+1577267937 c:\users\hp\desktop\jeu_de_moulin\scr\situation.c
 
-1451811446 c:\users\hp\desktop\jeu_de_moulin\sdl\i686-w64-mingw32\include\sdl2\sdl_net.h
-	<stdint.h>
-	"SDL.h"
-	"SDL_endian.h"
-	"SDL_version.h"
-	"begin_code.h"
-	"close_code.h"
-
-1482081915 source:c:\users\hp\desktop\jeu_de_moulin\scr\ini.c
-	<stdio.h>
-	<stdlib.h>
-	<string.h>
-	<ctype.h>
-	"ini.h"
-
-1482081915 c:\users\hp\desktop\jeu_de_moulin\scr\ini.h
-
-1577028578 c:\users\hp\desktop\jeu_de_moulin\scr\online.h
+1577542878 c:\users\hp\desktop\jeu_de_moulin\scr\online.h
 	"online.c"
 
-1577028838 c:\users\hp\desktop\jeu_de_moulin\scr\online.c
+1577533331 c:\users\hp\desktop\jeu_de_moulin\scr\online.c
 

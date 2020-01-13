@@ -4,7 +4,7 @@ Screen* initializeScreen(int type)
 
 	if(screen == NULL) printf("Erreur dans la création d'un screen\n");
 
-    screen->widgets = (Widget**)malloc(sizeof(Screen) * MAX_WIDGETS);
+    screen->widgets = (Widget**)calloc(MAX_WIDGETS, sizeof(Widget));
 	screen->state = 0;
     screen->type = type;
 	return screen;
@@ -103,10 +103,8 @@ int destroyScreen(Screen* screen)
 {
     if(screen == NULL) return 0;
 
-    for(int i = 0; i < MAX_WIDGETS; i++)
-    {
-        if(screen->widgets[i] != NULL) free(screen->widgets[i]);
-    }
+    free(screen->widgets);
 
+    free(screen);
     return 1;
 }

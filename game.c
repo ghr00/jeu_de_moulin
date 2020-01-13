@@ -18,3 +18,28 @@ int convertTurn(int turn)
 
     return 1;
 }
+
+int getRendererFlags()
+{
+    ini_t* file = NULL;
+
+    file = ini_load(GAME_CONFIG_FILE);
+
+    printf("file2 %p\n", file);
+
+    if(file == NULL)
+        printf("Echec du chargement du fichier ONLINE_CONFIG_FILE\n");
+
+    const char* _id = ini_get(file, "Graphics", "Debug");
+
+    int flags = atoi(_id);
+
+    printf("DEBUG%d\n", flags);
+
+    ini_free(file);
+
+    if(flags == 1)
+        return SDL_RENDERER_SOFTWARE;
+    else
+        return SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC;
+}

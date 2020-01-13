@@ -1,3 +1,5 @@
+#define GAME_CONFIG_FILE  "config.ini"
+
 #define MAX_GAME_TYPES 3
 #define MAX_SQUARES 3
 
@@ -46,5 +48,5 @@ typedef struct game
 
 int initializeGame(Game* game, enum gameType type, int optionnal_rule);
 int convertTurn(int turn); // convertit le tour en identifiant des joueurs
-
+int getRendererFlags();
 #include "game.c"

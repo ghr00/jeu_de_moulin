@@ -1,4 +1,24 @@
-void getIPAdress(IPaddress* ip, Uint16* port)
+void getOnlineID(int* id)
+{
+    ini_t* file = NULL;
+
+    file = ini_load(ONLINE_CONFIG_FILE);
+
+    printf("file2 %p\n", file);
+
+    if(file == NULL)
+        printf("Echec du chargement du fichier ONLINE_CONFIG_FILE\n");
+
+    const char* _id = ini_get(file, "Network", "ID");
+
+    *id = atoi(_id);
+
+    printf("IDD%d\n", *id);
+
+    ini_free(file);
+}
+
+const char* getIPAdress(Uint16* port)
 {
     const char* _host;
     const char* _port;
@@ -7,42 +27,39 @@ void getIPAdress(IPaddress* ip, Uint16* port)
 
     file = ini_load(ONLINE_CONFIG_FILE);
 
-    printf("file %p", file);
+    printf("file %p\n", file);
 
     if(file == NULL)
+    {
         printf("Echec du chargement du fichier ONLINE_CONFIG_FILE\n");
+        return "ERROR";
+    }
 
-    _port = ini_get(file, "Opponent", "Port");
-    _host = ini_get(file, "Opponent", "IP");
 
-    //*port = (Uint16)_port; // à corriger !
+    _port = ini_get(file, "Network", "Port");
+    _host = ini_get(file, "Network", "IP");
 
-    int nbrPort = atoi(_port);
+    *port = (Uint16)atoi(_port);
 
-    printf("Poort%d\n", nbrPort);
-    *port = (Uint16)nbrPort;
-
-    SDLNet_ResolveHost(ip, _host, *port);
+    printf("IP %s, Port %d", _host, *port);
 
     ini_free(file);
+    return _host;
 }
 
+/*
 UDPsocket initializeConnection(IPaddress* ip, Uint16* port, int* channel)
 {
     UDPsocket udpsock;
 
     getIPAdress(ip, port);
 
-    udpsock = SDLNet_UDP_Open(*port);
-
-    if(!udpsock)
+    if(! ( udpsock = SDLNet_UDP_Open(*port) ) )
     {
         printf("SDLNet_UDP_Open: %s\n", SDLNet_GetError());
     }
 
-    *channel = SDLNet_UDP_Bind(udpsock, -1, ip);
-
-    if(*channel==-1)
+    if( ( *channel = SDLNet_UDP_Bind(udpsock, -1, ip) ) == -1)
     {
         printf("SDLNet_UDP_Bind: %s\n", SDLNet_GetError());
         // do something because we failed to bind
@@ -121,7 +138,7 @@ int receiveMessage(char* message, int len, int timeout)
         printf("\tAucun message reçu..\n");
         T++;
     }
-    while(numrcv == 0 || T < timeout); // tant qu'aucun paquet n'est reçu...
+    while(numrcv == 0 && T < timeout); // tant qu'aucun paquet n'est reçu...
 
     if(T >= timeout)
     {
@@ -137,4 +154,4 @@ int receiveMessage(char* message, int len, int timeout)
 
     SDLNet_UDP_Close(udpsock);
     return 1;
-}
+}*/

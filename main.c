@@ -10,7 +10,32 @@
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_mixer.h>
-#include <SDL2/SDL_net.h>
+
+#ifdef WIN32 /* si vous êtes sous Windows */
+
+#include <winsock2.h>
+
+#elif defined (linux) /* si vous êtes sous Linux */
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h> /* close */
+#include <netdb.h> /* gethostbyname */
+#define INVALID_SOCKET -1
+#define SOCKET_ERROR -1
+#define closesocket(s) close(s)
+typedef int SOCKET;
+typedef struct sockaddr_in SOCKADDR_IN;
+typedef struct sockaddr SOCKADDR;
+typedef struct in_addr IN_ADDR;
+
+#else /* sinon vous êtes sur une plateforme non supportée */
+
+#error not defined for this platform
+
+#endif
 
 #include "ini.h"
 #include "sprite.h"
@@ -34,11 +59,15 @@
 #define     BOARD_THEME_1   2+1
 #define     BOARD_THEME_2   2+2
 
-int random(int min, int max);
+// Informations de connexion à l'opposant par défaut
+#define     HOSTNAME    "172.16.136.93"//"192.168.43.102"
+#define     PORT        49152
+
+int Random(int min, int max);
 
 void resetGame();
 
-void initializeSquares(SDL_Renderer* rendrer);
+void initializeSquares(SDL_Renderer* renderer);
 void drawMap(SDL_Renderer* rendrer);
 
 void ai_positionment(int ai, int placed[MAX_PLAYERS]);
@@ -52,6 +81,36 @@ int searchOpportunity(int ai, int* u, int* v);
 
 Uint32 updateCountdown(Uint32 intervalle, void* Count);
 Uint32 removeErrorScreen(Uint32 intervalle, void* params);
+
+static int onlineFunction(void* params);
+static int drawingFunction(void* params);
+//static int loadingFunction(void* params);
+//static int eventsFunction(void* params);
+
+// Permet d'entrer en mode listining UDP indépendament du programme
+SDL_Thread* onlineThread = NULL;
+SDL_Thread* drawingThread = NULL;
+// Chargement du jeu indépendament de son execution
+//SDL_Thread* loadingThread = NULL;
+//
+SDL_Thread* eventsThread = NULL;
+
+int activeOnlineThread = 0;
+int activeDrawingThread = 0;
+int activeEventsThread = 0;
+
+static void init(void);
+static void end(void);
+
+void WidgetsManager();
+void VerticesManager(int id);
+void MouvementPhase(int id, int i);
+void PlacementPhase(int id, int i);
+void MoulinPhase(int id, int i);
+
+void LoadPawns();
+void DrawWidgets();
+void DrawConfigTexts();
 
 // ------------------------------------- displayErrorScreen :
 // Colore temporairement la fenetre si le joueur fait une mauvaise action
@@ -72,7 +131,8 @@ Screen* screen[MAX_SCREENS];
 #define INFO_MOUVEMENT  9
 #define INFO_SAUT       10
 
-#define ERROR_SCREEN 9+2
+#define ERROR_SCREEN    9+2
+#define ERROR_TIME      500
 
 SDL_Color orange = {255, 127, 40, 255};
 SDL_Color red = {255, 10, 10, 255};
@@ -104,33 +164,40 @@ SDL_TimerID timerError = -1; // un timer pour l'ecran d'erreur temporaire
 
 Vertex* focusedVertex[MAX_PLAYERS];
 
+SDL_Renderer* renderer = NULL;
+
+Sprite sprites[PLAYER_INITIAL_PAWNS][MAX_PLAYERS];
+
+int placed[MAX_PLAYERS]; // si le joueur a bien placé un pion
+
+Mix_Chunk* pawnSound;
+
+SDL_Event event;
+SDL_bool quit = SDL_FALSE;
+
+SDL_Point MS; // position de la souris sur l'écran
+
+int opponent = -1; // id de l'adversaire dans le cas d'une partie LAN
+
+int menu = MENU_START; // id du screen actuel
+
+char turnChar[32];
+char playerChar[32];
+char moulinChar[64];
+char gameChar[64];
+char countdownChar[16];
+
 int main(int argc, char *argv[])
 {
+    // initialisation des sockets pour la platforme WINDOWS
+    init();
+
     SDL_Window* window = NULL;
-    SDL_Renderer* renderer = NULL;
 
-    SDL_Event event;
-    SDL_bool quit = SDL_FALSE;
-
-    SDL_Point MS;
-
-    Mix_Chunk* pawnSound;
-
-    char turnChar[32];
-    char playerChar[32];
-    char moulinChar[64];
-    char gameChar[64];
-    char countdownChar[16];
-
-    Countdown* countdown = NULL;
+    //Countdown* countdown = NULL;
 
     srand(time(NULL));
 
-    int menu = MENU_START; // id du screen actuel
-
-    Sprite sprites[PLAYER_INITIAL_PAWNS][MAX_PLAYERS];
-
-    int opponent = -1; // id de l'adversaire dans le cas d'une partie LAN
 
     if(0 != SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER))
     {
@@ -138,11 +205,11 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    if(0 != SDLNet_Init())
+    /*if(0 != SDLNet_Init())
     {
         fprintf(stderr, "Erreur SDLNet_Init : %s", SDLNet_GetError());
         return EXIT_FAILURE;
-    }
+    }*/
 
     if(0 != TTF_Init())
     {
@@ -172,7 +239,9 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    flags = getRendererFlags();
+    //renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);//);
+    renderer = SDL_CreateRenderer(window, -1, flags);
     if(NULL == renderer)
     {
         fprintf(stderr, "Erreur SDL_CreateRenderer : %s", SDL_GetError());
@@ -182,22 +251,10 @@ int main(int argc, char *argv[])
     // Initialisation du décompte
     //countdown = initializeCountdown(renderer, black, 0, 1, 0, -1, 1);
 
-    for(int i = 0; i < PLAYER_INITIAL_PAWNS; i++)
-    {
-        for(int j = 0; j < MAX_PLAYERS; j++)
-        {
-            sprites[i][j].imageFile = PAWN_FILE;
-            sprites[i][j].renderer = renderer;
+    /*loadingThread = SDL_CreateThread(loadingFunction, "loadingFunction", NULL);
+    SDL_DetachThread(loadingThread);*/
 
-            loadSprite( &(sprites[i][j]) );
-
-
-            setSpritePosition( &(sprites[i][j]), 50*j + 25, 20*i + 100);
-        }
-
-        changeColorSprite( &(sprites[i][0]), blue);
-        changeColorSprite( &(sprites[i][1]), red);
-    }
+    LoadPawns();
 
     // Initilisation des deux écrans : écran du menu de demarrage et écran du plateau du jeu
     screen[0] = initializeScreen(SCREEN_TYPE_MENU); // menuScreen
@@ -262,7 +319,7 @@ int main(int argc, char *argv[])
     gameConfigText[0]  =   createText(renderer, "coolvetica.ttf", 24, "Type de la partie", 80, 80, black, 0);
     gameConfigText[1]  =   createText(renderer, "coolvetica.ttf", 24, "Niveau de l'IA", 80, 180, black, 0);
     gameConfigText[2]  =   createText(renderer, "coolvetica.ttf", 24, "Activer la regle optionnelle", 80, 280, black, 0);
-    gameConfigText[3]  =   createText(renderer, "coolvetica.ttf", 24, "Theme du platefau", 80, 380, black, 0);
+    gameConfigText[3]  =   createText(renderer, "coolvetica.ttf", 24, "Theme du plateau", 80, 380, black, 0);
 
     // Initilisation de la partie & joueurs
     initializePlayer( &(game.players[0]), "joueur", blue); // blue est la couleur du pion du premier joueur
@@ -283,14 +340,6 @@ int main(int argc, char *argv[])
     // Initialisation des parametres de la partie
     initializeGame(&game, GAME_TYPE_PvP, 1);
 
-    /*game.active = 0;
-    game.turn = 0;
-    game.type = GAME_TYPE_PvP;
-    game.hidingTurn = 0;
-    game.optionnel = 1;
-    game.frame = 0;
-    game.cap = 1;*/
-
     // Initilisation des trois carrés formant le plateau du jeu
     initializeSquares(renderer);
 
@@ -298,8 +347,16 @@ int main(int argc, char *argv[])
     for(int u = 0; u < 24; u++) setVertexList(vertices[u], Adjacency);
 
     // Initilisations des musiques et des sons
-    music = Mix_LoadMUS("music.mp3");
-    pawnSound = Mix_LoadWAV("pawn.mp3");
+    music = Mix_LoadMUS("audio/music.mp3");
+    pawnSound = Mix_LoadWAV("audio/pawn.wav");
+
+    Mix_Volume(1, MIX_MAX_VOLUME);
+
+    if(music == NULL)
+        fprintf(stderr, "Echec du chargement de la musique.");
+
+    if(pawnSound == NULL)
+        fprintf(stderr, "Echec du chargement du PAWN_SOUND.");
 
     Mix_AllocateChannels(2); // nombre de canaux alloués pour le jeu de son courts
 
@@ -318,6 +375,13 @@ int main(int argc, char *argv[])
     /*if(music != NULL)
         Mix_PlayMusic(music, -1);*/
 
+    /*if(activeEventsThread == 0)
+    {
+        eventsThread = SDL_CreateThread(eventsFunction, "eventsFunction", NULL);
+        SDL_DetachThread(eventsThread);
+        activeEventsThread = 1;
+    }*/
+
     while(!quit)
     {
         //SDL_WaitEvent(&event);
@@ -330,6 +394,7 @@ int main(int argc, char *argv[])
             if(event.type == SDL_QUIT)
                 quit = SDL_TRUE;
 
+            // Le clavier ne sera pas utilisé dans le jeu
             /*if(event.type == SDL_KEYDOWN)
             {
                if(menu == MENU_START)
@@ -346,282 +411,7 @@ int main(int argc, char *argv[])
             {
                 //
                 if(event.button.button == SDL_BUTTON_LEFT)
-                {
-                    // Si le joueur fait un clique gauche dans le menu "demarrage"
-                    if(menu == MENU_START)
-                    {
-                        Widget wid;
-
-                        SDL_Rect RMS;
-                        RMS.h = 2; RMS.w = 2; RMS.x = MS.x; RMS.y = MS.y;
-
-                        int i = getClickedWidget(screen[menu], &RMS, &wid);
-
-                        if(i != -1)
-                        {
-                            screen[menu]->widgets[i]->clicked = 0;
-
-                            setWidgetColor(screen[menu]->widgets[i], white);
-                        }
-
-                        if(i == 1+2)
-                        {
-                            menu = MENU_SETTINGS;
-                        }
-
-                        else if(i == 3+2) quit = SDL_TRUE;
-
-                    }
-
-                    // Il doit d'abords configurer sa partie
-                    else if(menu == MENU_SETTINGS)
-                    {
-                        Widget wid;
-
-                        SDL_Rect RMS;
-                        RMS.h = 2; RMS.w = 2; RMS.x = MS.x; RMS.y = MS.y;
-
-                        int i = getClickedWidget(screen[menu], &RMS, &wid);
-
-                        if(i != -1)
-                        {
-                            screen[menu]->widgets[i]->clicked = 0;
-
-                            setWidgetColor(screen[menu]->widgets[i], white);
-                        }
-
-                        switch(i)
-                        {
-                            // Les identifiants des widgets commencent de 2 jusqu'à MAX_WIDGETS, d'où le +2.
-                            case 1+2: // pvp
-                            {
-                                if(game.type != GAME_TYPE_PvP)
-                                {
-                                    game.type = GAME_TYPE_PvP;
-
-                                    setWidgetColor(screen[menu]->widgets[i], green);
-                                    setWidgetColor(screen[menu]->widgets[i+1], white);
-                                    setWidgetColor(screen[menu]->widgets[i+2], white);
-
-                                    setWidgetColor(screen[menu]->widgets[4+2], grey);
-                                    setWidgetColor(screen[menu]->widgets[5+2], grey);
-
-                                    setWidgetClickable(screen[menu]->widgets[4+2], WIDGET_NOT_CLICKABLE);
-                                    setWidgetClickable(screen[menu]->widgets[5+2], WIDGET_NOT_CLICKABLE);
-                                }
-                                break;
-                            }
-
-                            case 2+2: // pvAI
-                            {
-                                if(game.type != GAME_TYPE_PvAI)
-                                {
-                                    game.type = GAME_TYPE_PvAI;
-
-                                    setWidgetColor(screen[menu]->widgets[i-1], white);
-                                    setWidgetColor(screen[menu]->widgets[i], green);
-                                    setWidgetColor(screen[menu]->widgets[i+1], white);
-
-                                    setWidgetColor(screen[menu]->widgets[3+2], white);
-                                    setWidgetColor(screen[menu]->widgets[4+2], white);
-
-                                    setWidgetClickable(screen[menu]->widgets[3+2], WIDGET_CLICKABLE);
-                                    setWidgetClickable(screen[menu]->widgets[4+2], WIDGET_CLICKABLE);
-                                }
-                                break;
-                            }
-
-                            case 3+2: // pvp_lan
-                            {
-                                if(game.type != GAME_TYPE_PvP_ONLINE)
-                                {
-                                    game.type = GAME_TYPE_PvP_ONLINE;
-
-                                    setWidgetColor(screen[menu]->widgets[i], green);
-                                    setWidgetColor(screen[menu]->widgets[i-1], white);
-                                    setWidgetColor(screen[menu]->widgets[i-2], white);
-
-                                    setWidgetColor(screen[menu]->widgets[4+2], grey);
-                                    setWidgetColor(screen[menu]->widgets[5+2], grey);
-
-                                    setWidgetClickable(screen[menu]->widgets[4+2], WIDGET_NOT_CLICKABLE);
-                                    setWidgetClickable(screen[menu]->widgets[5+2], WIDGET_NOT_CLICKABLE);
-                                }
-                                break;
-                            }
-
-                            case 4+2: // facile
-                            {
-                                if(game.type == GAME_TYPE_PvAI)
-                                {
-                                    game.difficulty = AI_TYPE_EASY_RANDOM;
-
-
-
-                                    setWidgetColor(screen[menu]->widgets[i], green);
-                                    setWidgetColor(screen[menu]->widgets[i+1], white);
-                                }
-                                break;
-                            }
-
-                            case 5+2: // moyen
-                            {
-                                if(game.type == GAME_TYPE_PvAI)
-                                {
-                                    game.difficulty = AI_TYPE_MEDIUM;
-
-                                    setWidgetColor(screen[menu]->widgets[i-1], white);
-                                    setWidgetColor(screen[menu]->widgets[i], green);
-                                }
-
-                                break;
-                            }
-
-                            case 6+2: // regle oui
-                            {
-                                game.optionnel = 1;
-
-                                setWidgetColor(screen[menu]->widgets[5+2], green);
-                                setWidgetColor(screen[menu]->widgets[6+2], black);
-                                /*setWidgetVisible(screen[menu]->widgets[i], 0);
-                                setWidgetVisible(screen[menu]->widgets[i+1], 1);*/
-                                break;
-                            }
-
-                            case 7+2: // regle non
-                            {
-                                game.optionnel = 0;
-
-                                setWidgetColor(screen[menu]->widgets[5+2], black);
-                                setWidgetColor(screen[menu]->widgets[6+2], red);
-                                /*setWidgetVisible(screen[menu]->widgets[i-1], 1);
-                                setWidgetVisible(screen[menu]->widgets[i], 0);*/
-                                break;
-                            }
-
-                            case 8+2: // theme_0
-                            {
-                                setWidgetVisible(screen[1]->widgets[BOARD_THEME_0], 1);
-                                setWidgetVisible(screen[1]->widgets[BOARD_THEME_1], 0);
-                                setWidgetVisible(screen[1]->widgets[BOARD_THEME_2], 0);
-                                break;
-                            }
-
-                            case 9+2: // theme_1
-                            {
-                                setWidgetVisible(screen[1]->widgets[BOARD_THEME_0], 0);
-                                setWidgetVisible(screen[1]->widgets[BOARD_THEME_1], 1);
-                                setWidgetVisible(screen[1]->widgets[BOARD_THEME_2], 0);
-                                break;
-                            }
-
-                            case 10+2: // theme_2
-                            {
-                                setWidgetVisible(screen[1]->widgets[BOARD_THEME_0], 0);
-                                setWidgetVisible(screen[1]->widgets[BOARD_THEME_1], 0);
-                                setWidgetVisible(screen[1]->widgets[BOARD_THEME_2], 1);
-                                break;
-                            }
-
-                            case 11+2:
-                            {
-                                menu = MENU_GAME;
-
-                                partyState = INFO_PLACEMENT; /* permet de changer le texte informatif pour
-                                                                        expliquer la phase de placement */
-                                // Le décompte commence!
-                                timer1s = SDL_AddTimer(1000, updateCountdown, &count); // T = 1000ms = 1s
-
-                                if(music != NULL)
-                                    Mix_PlayMusic(music, -1);
-
-                                game.active = 1;
-                                break;
-                            }
-
-                            case 12+2:
-                            {
-                                menu = MENU_START;
-                                break;
-                            }
-                        }
-                    }
-
-                    else if (menu == MENU_GAME)
-                    {
-                        Widget wid;
-
-                        SDL_Rect RMS;
-                        RMS.h = 2; RMS.w = 2; RMS.x = MS.x; RMS.y = MS.y;
-
-                        int i = getClickedWidget(screen[menu], &RMS, &wid);
-
-                        if(i != -1)
-                        {
-                            screen[menu]->widgets[i]->clicked = 0;
-
-                            setWidgetColor(screen[menu]->widgets[i], white);
-                        }
-
-                        switch(i)
-                        {
-                            // Les identifiants des widgets commencent de 2 jusqu'à MAX_WIDGETS, d'où le +2.
-                            case 3+2: // Recommencer la partie
-                            {
-                                resetGame();
-
-                                partyState = INFO_PLACEMENT;
-
-                                game.active = 1;
-                                break;
-                            }
-
-                            case 4+2: // Passer le tour
-                            {
-                                if(game.type == GAME_TYPE_PvAI)
-                                {
-                                    printf("Il n'est pas possible de passer le tour dans une game contre IA");
-                                }
-
-                                else
-                                {
-                                    int id; // id du joueur qui joue actuellement
-
-                                    id = convertTurn(game.turn); // [voir le fichier game.h]
-
-                                    pass++;
-
-                                    game.turn++;
-
-                                    for(int k = 0; k < 4; k++)
-                                    {
-                                        if(game.players[id].moulinID[k] != -1)
-                                        {
-                                            Lines[ game.players[id].moulinID[k] ][3]    =   LINE_USED;
-
-                                            game.players[id].moulin--;
-                                            game.players[id].moulinID[k] = -1;
-                                        }
-                                    }
-
-                                }
-
-                                break;
-                            }
-
-                            case 5+2:
-                            {
-                                game.active = 0;
-
-                                resetGame();
-
-                                menu = MENU_START;
-                                break;
-                            }
-
-                        }
-                    }
-                }
+                    WidgetsManager();
             }
 
             else if(event.type == SDL_MOUSEBUTTONDOWN)
@@ -643,7 +433,7 @@ int main(int argc, char *argv[])
                     {
                         if(!game.active) continue;
 
-                        //Mix_PlayChannel(1, pawnSound, 0);
+                        Mix_PlayChannel(1, pawnSound, 0);
 
                         int id; // id du joueur qui joue actuellement
 
@@ -651,274 +441,62 @@ int main(int argc, char *argv[])
 
                         printf("\n\n[Tour] %d\n", game.turn);
 
-                        SDL_Rect rect;
-
-                        int placed[MAX_PLAYERS]; // si le joueur a bien placé un pion
-
                         placed[0] = -1;
                         placed[1] = -1;
 
-                       // interface
+                        /* Le gestionnaire des pions permet de savoir si le joueur est en phase de :
+                            - Positionnement.
+                            - Mouvement.
+                            - Moulin.
+                                        */
+                        VerticesManager(id);
 
-                        // la gestion des pions
+                        /* Par la suite, la variable placed[id] permet de verifier si le joueur a bien placé/fait bouger
+                            un pion sur le plateau. Si c'est le cas, on verifie si le positionnement/le deplacement
+                            d'un pion a generé un moulin..*/
 
-                        //verticesManager();
 
-                        for(int i = 0 ; i < MAX_VERTICES; i++)
-                        {
-                            rect = getVertexRectangle( vertices[i] );
-
-                            if( SDL_PointInRect(&MS, &rect) )
-                            {
-                                if(game.players[id].moulin > 0) // PHASE DE MOULIN (IA : NON)
-                                {
-                                    if(vertices[i]->owner != NULL && vertices[i]->owner == &game.players[1-id])
-                                    {
-                                        //if(vertices[i]->moulin == 1)
-                                        if(isVertexOnMoulin(vertices[i], Lines) != -1)
-                                        {
-                                            printf("Vous ne pouvez pas supprimer un pion qui fait partie d'un moulin. (%d)\n", isVertexOnMoulin(vertices[i], Lines));
-                                        }
-
-                                        else
-                                        {
-                                            // Suppression du pion
-
-                                            deletePawn(vertices[i]);
-
-                                            for(int k = 0; k < 4; k++)
-                                                Lines[ game.players[id].moulinID[k] ][3]    =   LINE_USED;
-
-                                            game.players[id].moulin--;
-                                            //game.players[id].moulinID = -1;
-
-                                            game.players[1-id].activePawns--;
-
-                                            if(game.players[id].moulin == 0)
-                                                game.turn++;
-
-                                            if(game.type == GAME_TYPE_PvAI)
-                                            {
-                                                /* Seul le joueur est capable de cliquer sur l'écran */
-                                                /* Il faut donc passer le tour du deuxieme joueur qui sera joué par l'ia ici.*/
-                                                game.turn++;
-                                                game.hidingTurn++;
-                                            }
-                                        }
-
-                                    }
-                                }
-
-                                else
-                                {
-                                    if(game.players[id].pawns > 0) // PHASE DE PLACEMENT
-                                    {
-                                        //changeVertexColor(vertices[i], game.players[1-id].color);
-                                        if(vertices[i]->owner == NULL)
-                                        {
-                                            setVertexOwner(vertices[i], &game.players[id]);
-                                            setPawnVisibilityState(vertices[i], 1);
-
-                                            placed[id] = i;
-
-                                            game.players[id].pawns--;
-
-                                            game.players[id].activePawns++;
-
-                                            game.turn++;
-
-                                            printf("[Joueur] Il a pose un pion au vertice %d\n", i);
-
-                                            pass = 0;
-
-                                            if(game.type == GAME_TYPE_PvAI)
-                                            {
-                                                /* L'IA va placer ses pions ici */
-
-                                                int ai = 1 - id;
-
-                                                ai_positionment(ai, placed);
-                                            }
-
-                                            // [LAN]
-                                            else if(game.type == GAME_TYPE_PvP_ONLINE)
-                                            {
-                                                char message[5];
-
-                                                vertexOwnerMessage(message, id, i);
-
-                                                sendMessage(message, 5);
-
-                                            }
-                                        }
-
-                                        else
-                                        {
-                                            printf("Cette case est deja occupee.\n");
-
-                                            displayErrorScreen(id);
-
-                                            timerError = SDL_AddTimer(500, removeErrorScreen, NULL); // T = 1000ms = 1s
-                                        }
-
-                                    }
-
-                                    else // PHASE DE MOUVEMENT
-                                    {
-                                        partyState = INFO_MOUVEMENT; /* permet de changer le texte informatif pour
-                                                                        expliquer la phase de mouvement */
-
-                                        if(focusedVertex[id] == NULL)
-                                        {
-                                            if(vertices[i]->owner != NULL && vertices[i]->owner != &game.players[id])
-                                                printf("Vous n'etes pas proprietaire de cette case.\n");
-
-                                            else focusedVertex[id] = vertices[i];
-                                        }
-
-                                        else
-                                        {
-                                            int j = focusedVertex[id]->id;
-
-                                            // si la régle optionnelle n'est pas active
-                                            if(game.optionnel == 0 || (game.optionnel == 1 &&
-                                                                         game.players[id].activePawns > 3))
-
-                                            {
-                                                if(Adjacency[i][j] == 0)
-                                                {
-                                                    printf("Mouvement impossible.");
-
-                                                    SDL_SetTextureAlphaMod(focusedVertex[id]->pawn.texture, 255);
-
-                                                    focusedVertex[id] = NULL;
-                                                    //break;
-                                                }
-
-                                                else if(vertices[i]->owner == NULL)
-                                                {
-                                                    printf("\tisVertexOnMoulin %d", isVertexOnMoulin(vertices[j], Lines));
-                                                    if(isVertexOnMoulin(vertices[j], Lines) != -1)
-                                                        deleteMoulins(vertices[j], Lines);
-
-                                                    movePawn(&game.players[id], focusedVertex[id], vertices[i]);
-
-                                                    pass = 0;
-
-                                                    printf("[Joueur] Mouvement de %d vers %d\n", focusedVertex[id]->id, i);
-
-                                                    if(Adjacency[ focusedVertex[id]->id ][i] == 0)
-                                                        printf("[Joueur] Il n'y a pas d'adjacence entre %d et %d\n", focusedVertex[id]->id, i);
-
-                                                    focusedVertex[id] = NULL;
-
-                                                    placed[id] = i;
-
-                                                    game.turn++;
-
-                                                    // Une fois que le joueur a fait bouger son pion, l'ai fera de même
-                                                    if(game.type == GAME_TYPE_PvAI) // AI phase de mouvement
-                                                    {
-                                                        int ai = 1 - id;
-
-                                                        if(game.players[ai].activePawns == 3)
-                                                            ai_saut(ai, placed);
-
-                                                        else
-                                                            ai_movement(ai, placed);
-                                                    }
-
-                                                    //break;
-                                                }
-                                            }
-
-                                            else if(game.optionnel == 1 && game.players[id].activePawns == 3)// si la régle optionnelle est active
-                                            {
-                                                partyState = INFO_SAUT; /* permet de changer le texte informatif pour
-                                                                            expliquer la phase de placement */
-
-                                                if(vertices[i]->owner == NULL)
-                                                {
-                                                    printf("\tisVertexOnMoulin %d", isVertexOnMoulin(vertices[j], Lines));
-                                                    if(isVertexOnMoulin(vertices[j], Lines) != -1)
-                                                        deleteMoulins(vertices[j], Lines);
-
-                                                    movePawn(&game.players[id], focusedVertex[id], vertices[i]);
-
-                                                    focusedVertex[id] = NULL;
-
-                                                    placed[id] = i;
-
-                                                    game.turn++;
-
-                                                    pass = 0;
-
-                                                    if(game.type == GAME_TYPE_PvAI) // AI phase de mouvement
-                                                    {
-                                                        int ai = 1 - id;
-
-                                                        if(game.players[ai].activePawns == 3)
-                                                            ai_saut(ai, placed);
-
-                                                        else
-                                                            ai_movement(ai, placed);
-                                                    }
-
-                                                    // On envoie un message qui indique à l'adversaire que le joueur a posé un pion
-                                                    // Ainsi, son plateau du jeu doit être mis à jour et ça sera à son tour de jouer
-                                                    else if(game.type == GAME_TYPE_PvP_ONLINE)
-                                                    {
-                                                        char message[5];
-
-                                                        vertexOwnerMessage(message, id, i);
-
-                                                        sendMessage(message, 5);
-                                                    }
-                                                    //break;
-                                                }
-
-                                                else printf("[Optionelle] Cette case est occupée.\n");
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        // Si le joueur a bien placé/fait bouger un pion sur le plateau
                         if(placed[id] != -1)
                         {
-                            int moulinID[4];
+                            printf("\t[LAN] (%d, %d)\n", id, opponent);
 
-                            for(int k = 0; k < 4; k++) moulinID[k] = -1;
-
-                            searchMoulin(&game.players[id], vertices, Lines, moulinID);
-
-                            for(int k = 0; k < 4; k++)
+                            if(game.type != GAME_TYPE_PvP_ONLINE ||
+                               (game.type == GAME_TYPE_PvP_ONLINE && id != opponent) )
                             {
-                                if(moulinID[k] != -1)
+
+                                int moulinID[4];
+
+                                for(int k = 0; k < 4; k++) moulinID[k] = -1;
+
+                                searchMoulin(&game.players[id], vertices, Lines, moulinID);
+
+                                for(int k = 0; k < 4; k++)
+                                    if(moulinID[k] != -1)
+                                    {
+                                        printf("[Joueur] moulinID[%d](id:%d), %d\n", k, id, moulinID[k]);
+
+                                        game.players[id].moulin++;
+                                        game.players[id].moulinID[k]    =   moulinID[k];
+
+                                        printf("\n\t[Joueur] MOULLLIIIN (%d) POUR %s(%d): (%d, %d)\n", k,
+                                                game.players[id].pseudo, id, moulinID[k], game.players[id].moulin);
+                                    }
+
+                                if(game.players[id].moulin > 0)
                                 {
-                                    printf("[Joueur] moulinID[%d](id:%d), %d\n", k, id, moulinID[k]);
-
-                                    game.players[id].moulin++;
-                                    game.players[id].moulinID[k]    =   moulinID[k];
-
-                                    printf("\n\t[Joueur] MOULLLIIIN (%d) POUR %s(%d): (%d, %d)\n", k, game.players[id].pseudo, id, moulinID[k], game.players[id].moulin);
-                                }
-                            }
-
-                            if(game.players[id].moulin > 0)
-                            {
-                                if(game.type != GAME_TYPE_PvAI)
-                                {
+                                    if(game.type != GAME_TYPE_PvAI)
+                                    {
                                         //game.hidingTurn++;
                                         game.turn ++;
+                                    }
                                 }
                             }
                         }
 
+                        /* Même chose que precedemment mais pour l'IA */
                         int ai = 1 - id;
-                        // Si l'ia a bien placé/fait bouger un pion sur le plateau
+
+                        // Si l'ia a bien placé/fait bouger un pion sur le plateau..
                         if(game.type == GAME_TYPE_PvAI && placed[ai] != -1)
                         {
                             int moulinID[4];
@@ -945,41 +523,11 @@ int main(int argc, char *argv[])
                 }
             }
         }
+        // Cette fonction dessine les widgets (bouttons, images du IU) selon le screen active
+        DrawWidgets();
 
-        if(screen[menu] != NULL)
-        {
-            if(menu == MENU_SETTINGS)
-            {
-                for(int i = 2; i < MAX_WIDGETS; i++)
-                {
-                    if(screen[menu]->widgets[i] == NULL) continue;
-
-                    drawWidget(screen[menu]->widgets[i]);
-                }
-            }
-
-            else
-            {
-                for(int i = 2; i < MAX_WIDGETS; i++)
-                {
-                    if(screen[menu]->widgets[i] != NULL)
-                        drawWidget(screen[menu]->widgets[i]);
-                }
-            }
-
-        }
-
-        for(int i = 0; i < 4; i++)
-        {
-            if(gameConfigText[i] != NULL)
-            {
-                if(menu == MENU_SETTINGS) setTextVisible(gameConfigText[i], 1 );
-                else setTextVisible(gameConfigText[i], 0 );
-
-                SDL_SetRenderDrawColor(renderer, white.r, white.g, white.b, white.a);
-                drawText(gameConfigText[i]);
-            }
-        }
+        // Si l'écran de configuration de la partie est actif, cette fonction dessine l'interface
+        DrawConfigTexts();
 
         if(screen[menu] != NULL) if(menu == MENU_GAME)
         {
@@ -990,67 +538,37 @@ int main(int argc, char *argv[])
             // [LAN]
             if(game.type == GAME_TYPE_PvP_ONLINE)
             {
-                printf("_______________ LAN _________________ \n");
+                //printf("_______________ LAN _________________ \n");
                 int id = convertTurn( game.turn );
 
                 if(opponent == -1)
-                    opponent = 1 - id;
+                    getOnlineID(&opponent);
 
-                if(id != opponent)
+                //opponent = 0;
+
+                //printf("L'opponent : %d", opponent);
+
+                //printf("(%d, %d)\n", id, opponent);
+                if(id != 2)//opponent)
                 {
-                    char message[5];
+                    //char buffer[1024];
 
-                    int reception = receiveMessage(message, 5, 10000);
-
-                    printf("reception : %d\n", reception);
-
-                    if(reception == 1)
+                    if(activeOnlineThread == 0)
                     {
-                        char type = message[0];
+                        activeOnlineThread = 1;
 
-                        if(type != '\0')
-                        {
-                            int vertex;
+                        onlineThread = SDL_CreateThread(onlineFunction, "onlineFunction", NULL);
 
-                            sscanf(message, "%d", &vertex);
+                        //SDL_WaitThread(onlineThread, NULL);
+                        SDL_DetachThread(onlineThread);
 
-                            switch(type)
-                            {
-                                case 'o': // positionnement d'un pion
-                                {
-                                    printf("Positionnement d'un pion.");
-                                    break;
-                                }
+                        onlineThread = NULL;
 
-                                case 'p': // positionnement d'un pion
-                                {
-                                    break;
-                                }
-
-                                case 'm': // mouvement d'un pion
-                                {
-                                    break;
-                                }
-
-                                case 'r': // suppression d'un pion
-                                {
-                                    break;
-                                }
-
-                                default:
-                                    printf("\tLe type de message recu est non reconnu.");
-                            }
-                        }
-
-                        else
-                        {
-                            printf("\tLe message reçu est vide.\n");
-                        }
+                        printf("Creation et detachement du thread online\n");
                     }
 
-                    else
-                        printf("\tErreur dans la reception du message, %d\n", reception);
                 }
+
             }
             if(isPlayerAI(game.players[0]))
                 setPlayerAI(&(game.players[0]), game.difficulty);
@@ -1060,17 +578,15 @@ int main(int argc, char *argv[])
 
             SDL_SetRenderDrawColor(renderer, black.r, black.g, black.b, black.a);
 
-            drawMap(renderer);
-            for(int j = 0; j < MAX_PLAYERS; j++)
+            if(activeDrawingThread == 0)
             {
-                for(int i = 0; i < game.players[j].pawns; i++)
-                    drawSprite( &(sprites[i][j]) );
-            }
+                //activeDrawingThread = 1;
 
-            for(int i = 0; i < MAX_PLAYERS; i++)
-            {
-                if(focusedVertex[i] != NULL)
-                    SDL_SetTextureAlphaMod(focusedVertex[i]->pawn.texture, 100);
+                //drawingThread = SDL_CreateThread(drawingFunction, "drawingFunction", NULL);
+                //SDL_DetachThread(drawingThread);
+                //drawingThread = NULL;
+
+                drawingFunction(NULL);
             }
 
             if(partyState != 0)
@@ -1105,8 +621,8 @@ int main(int argc, char *argv[])
                 setWidgetVisible(screen[1]->widgets[INFO_SAUT], 0);
             }
 
-            if(countdown != NULL)
-                drawCountdown(countdown);
+            /*if(countdown != NULL)
+                drawCountdown(countdown);*/
 
             if(countdownText != NULL)
             {
@@ -1260,10 +776,10 @@ int main(int argc, char *argv[])
         /* Permet de limiter le nombre de FPS.
          * La constante SCREEN_FPS est definie dans game.h
          */
-        while(lastTime - SDL_GetTicks() < (1000 / SCREEN_FPS))
+        /*while(lastTime - SDL_GetTicks() < (1000 / SCREEN_FPS))
         {
             SDL_Delay(1);
-        }
+        }*/
 
         SDL_RenderPresent(renderer);
         SDL_RenderClear(renderer);
@@ -1279,13 +795,13 @@ int main(int argc, char *argv[])
     destroyText(gameText);
     for(int i = 0; i < 4; i++) destroyText(gameConfigText[i]);
 
-    /*destroyScreen(screen[0]);
+    destroyScreen(screen[0]);
     destroyScreen(screen[1]);
     destroyScreen(screen[2]);
     destroyPlayer(& (game.players[0]) );
     destroyPlayer(& (game.players[1]) );
 
-    if(countdown != NULL)
+    /*if(countdown != NULL)
        destroyCountdown(countdown);*/
 
     Mix_FreeMusic(music);
@@ -1298,13 +814,15 @@ int main(int argc, char *argv[])
     TTF_Quit();
     IMG_Quit();
     Mix_CloseAudio();
-    SDLNet_Quit();
+    //SDLNet_Quit();
     SDL_Quit();
+
+    end();
 
     return EXIT_SUCCESS;
 }
 
-int random(int min, int max)
+int Random(int min, int max)
 {
     return rand() % (max - min) + min + 1;
 }
@@ -1487,7 +1005,7 @@ void ai_positionment(int ai, int placed[MAX_PLAYERS])
             /* Recherche aléatoire d'une case vide */
             do
             {
-                u = random(0, MAX_VERTICES-1);
+                u = Random(0, MAX_VERTICES-1);
             }
             while( vertices[u]->owner == &(game.players[ai]) || vertices[u]->owner == &(game.players[id]) );
         }
@@ -1535,7 +1053,7 @@ void ai_movement(int ai, int placed[MAX_PLAYERS])
 
             do
             {
-                u = random(0, MAX_VERTICES-1);
+                u = Random(0, MAX_VERTICES-1);
 
                 cmp++;
             }
@@ -1550,7 +1068,7 @@ void ai_movement(int ai, int placed[MAX_PLAYERS])
 
             do
             {
-                v = random(0, MAX_VERTICES-1);
+                v = Random(0, MAX_VERTICES-1);
 
                 //if(cmp > MAX_VERTICES*2) break;
 
@@ -1598,7 +1116,7 @@ void ai_saut(int ai, int placed[MAX_PLAYERS])
 
         do
         {
-            u = random(0, MAX_VERTICES-1);
+            u = Random(0, MAX_VERTICES-1);
 
             cmp++;
         }
@@ -1613,7 +1131,7 @@ void ai_saut(int ai, int placed[MAX_PLAYERS])
 
         do
         {
-            v = random(0, MAX_VERTICES-1);
+            v = Random(0, MAX_VERTICES-1);
 
             //if(cmp > MAX_VERTICES*2) break;
 
@@ -1696,7 +1214,7 @@ void ai_moulin(int ai, int moulinID)
         {
             do
             {
-                u = random(0, MAX_VERTICES-1);
+                u = Random(0, MAX_VERTICES-1);
                 printf("[IA] %d\n", u);
             }
             while(vertices[u]->owner != &(game.players[id]) || isVertexOnMoulin(vertices[u], Lines) != -1);
@@ -1864,3 +1382,962 @@ void displayErrorScreen(int id)
 	printf("[ErrorScreen] Affichage de l'ecran d'erreur\n");
 }
 
+static void init(void)
+{
+#ifdef WIN32
+    WSADATA wsa;
+    int err = WSAStartup(MAKEWORD(2, 2), &wsa);
+    if(err < 0)
+    {
+        puts("WSAStartup failed !");
+        exit(EXIT_FAILURE);
+    }
+#endif
+}
+
+static void end(void)
+{
+#ifdef WIN32
+    WSACleanup();
+#endif
+}
+
+static int onlineFunction(void* params)
+{
+    int n;
+
+    int id = convertTurn(game.turn);
+
+    char buffer[1024];
+
+    SOCKET sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if(sock == INVALID_SOCKET)
+    {
+        perror("socket()");
+        exit(EXIT_FAILURE);
+    }
+
+    SOCKADDR_IN sin = { 0 };
+
+    struct hostent *hostinfo = NULL;
+
+    const char *hostname = HOSTNAME;
+    Uint16 port = PORT;
+
+    hostname = getIPAdress(&port);
+
+    printf("HOST %s\tPORT %d", hostname, port);
+
+    sin.sin_addr.s_addr = htonl(INADDR_ANY);
+    sin.sin_family = AF_INET;
+    sin.sin_port = htons(port);
+
+    if(bind (sock, (SOCKADDR *) &sin, sizeof sin) == SOCKET_ERROR)
+    {
+        perror("bind()");
+        exit(EXIT_FAILURE);
+    }
+
+
+    hostinfo = gethostbyname(hostname);
+    if (hostinfo == NULL)
+    {
+        fprintf (stderr, "Unknown host %s.\n", hostname);
+        exit(EXIT_FAILURE);
+    }
+
+    SOCKADDR_IN from = { 0 };
+
+    #ifdef WIN32 /* si vous êtes sous Windows */
+
+    int fromsize = sizeof from;
+
+    #elif defined (linux) /* si vous êtes sous Linux */
+
+    socklen_t fromsize = sizeof from;
+
+    #endif
+
+    if((n = recvfrom(sock, buffer, sizeof buffer - 1, 0, (SOCKADDR *)&from, &fromsize)) < 0)
+    {
+        perror("recvfrom()");
+        //exit(EXIT_FAILURE);
+    }
+
+    else
+    {
+        buffer[n] = '\0';
+
+        /* traitement */
+
+        printf("Message reçu %s\n", buffer);
+    }
+
+    closesocket(sock);
+
+    int reception;
+
+    if(strlen(buffer) != 0)
+        reception = 1;
+
+    if(reception == 1)
+    {
+        //char type = buffer[0];
+        char type = '\0';
+
+        int vertex, vertex2;
+
+        sscanf(buffer, "%c%d-%d", &type, &vertex, &vertex2);
+
+        if(type != '\0')
+        {
+            switch(type)
+            {
+                case 'o': // positionnement d'un pion
+                {
+                    printf("Positionnement d'un pion.");
+                    break;
+                }
+
+                case 'p': // positionnement d'un pion
+                {
+                    printf("\n\tPositionnement d'un pion au sommet %d\n\n.", vertex);
+
+                    int op = opponent;//1 - id;
+
+                    setVertexOwner(vertices[vertex], &game.players[op]);
+                    setPawnVisibilityState(vertices[vertex], 1);
+
+                    placed[op] = vertex;
+
+                    game.players[op].pawns--;
+
+                    game.players[op].activePawns++;
+
+                    game.turn++;
+
+                    printf("[Adversaire-LAN%dvs%d] Il a pose un pion au vertice %d\n", op, id, vertex);
+
+                    pass = 0;
+
+                    int moulinID[4];
+
+                    for(int k = 0; k < 4; k++) moulinID[k] = -1;
+
+                    searchMoulin(&game.players[op], vertices, Lines, moulinID);
+
+                    /*for(int k = 0; k < 4; k++)
+                        if(moulinID[k] != -1)
+                        {
+                            printf("[Joueur-LAN] moulinID[%d](id:%d), %d\n", k, id, moulinID[k]);
+
+                            game.players[op].moulin++;
+                            game.players[op].moulinID[k]    =   moulinID[k];
+
+                            printf("\n\t[Joueur-LAN] MOULLLIIIN (%d) POUR %s(%d): (%d, %d)\n", k, game.players[op].pseudo, id, moulinID[k], game.players[op].moulin);
+                        }*/
+
+
+                    break;
+                }
+
+                case 'm': // mouvement d'un pion
+                {
+                    printf("\nMouvement d'un pion du sommet %d au sommet %d\n\n.", vertex, vertex2);
+
+                    int op = 1 - id;//opponent;
+
+                    movePawn(&game.players[op], vertices[vertex], vertices[vertex2]);
+
+                    placed[op] = vertex2;
+
+                    game.turn++;
+
+                    int moulinID[4];
+
+                    for(int k = 0; k < 4; k++) moulinID[k] = -1;
+
+                    searchMoulin(&game.players[op], vertices, Lines, moulinID);
+
+                    break;
+                }
+
+                /*case 'f': // formation d'un moulin
+                {
+                    printf("\tFormation du moulin %d\n\n.", vertex);
+
+                    break;
+                }*/
+
+                case 'r': // suppression d'un pion
+                {
+                    printf("\tSuppression du pion du sommet %d\n\n.", vertex);
+
+                    int op = opponent;//1 - id
+
+                    deletePawn(vertices[vertex]);
+
+                    for(int k = 0; k < 4; k++)
+                            Lines[ game.players[op].moulinID[k] ][3]    =   LINE_USED;
+
+                    game.players[op].moulin--;
+                    //game.players[id].moulinID = -1;
+
+                    game.players[1-op].activePawns--;
+
+                    if(game.players[op].moulin == 0)
+                        game.turn++;
+
+                    break;
+                }
+
+                default:
+                    printf("\tLe type de message recu est non reconnu.");
+            }
+        }
+
+        else
+        {
+            printf("\tLe message reçu est vide.\n");
+        }
+    }
+
+    else
+        printf("\tErreur dans la reception du message, %d\n", reception);
+
+    //onlineThread = NULL;
+    activeOnlineThread = 0;
+
+    return 1;
+}
+
+static int drawingFunction(void* params)
+{
+    drawMap(renderer);
+    for(int j = 0; j < MAX_PLAYERS; j++)
+    {
+        for(int i = 0; i < game.players[j].pawns; i++)
+            drawSprite( &(sprites[i][j]) );
+    }
+
+    for(int i = 0; i < MAX_PLAYERS; i++)
+    {
+        if(focusedVertex[i] != NULL)
+            SDL_SetTextureAlphaMod(focusedVertex[i]->pawn.texture, 100);
+    }
+
+    activeDrawingThread = 0;
+    return 1;
+}
+
+/*
+static int eventsFunction(void* params)
+{
+    return 1;
+}
+
+static int loadingFunction(void* params)
+{
+    return 1;
+}*/
+
+///
+//id: id du joueur actuel
+void VerticesManager(int id)
+{
+    SDL_Rect rect;
+
+    for(int i = 0 ; i < MAX_VERTICES; i++)
+    {
+        rect = getVertexRectangle( vertices[i] );
+
+        if( SDL_PointInRect(&MS, &rect) )
+        {
+            if(game.players[id].moulin > 0) // PHASE DE MOULIN (IA : NON)
+            {
+                MoulinPhase(id, i);
+            }
+
+            else
+            {
+                if(game.players[id].pawns > 0) // PHASE DE PLACEMENT
+                    PlacementPhase(id, i);
+
+
+                else // PHASE DE MOUVEMENT
+                    MouvementPhase(id, i);
+            }
+        }
+    }
+}
+
+void MoulinPhase(int id, int i)
+{
+    if(vertices[i]->owner != NULL && vertices[i]->owner == &game.players[1-id])
+    {
+        //if(vertices[i]->moulin == 1)
+        if(isVertexOnMoulin(vertices[i], Lines) != -1)
+            printf("Vous ne pouvez pas supprimer un pion qui fait partie d'un moulin. (%d)\n", isVertexOnMoulin(vertices[i],
+                                                                                                                 Lines));
+        else
+        {
+            // Suppression du pion
+
+            deletePawn(vertices[i]);
+
+            for(int k = 0; k < 4; k++)
+                    Lines[ game.players[id].moulinID[k] ][3]    =   LINE_USED;
+
+            game.players[id].moulin--;
+            //game.players[id].moulinID = -1;
+
+            game.players[1-id].activePawns--;
+
+            if(game.players[id].moulin == 0)
+                game.turn++;
+
+            if(game.type == GAME_TYPE_PvAI)
+            {
+                            /* Seul le joueur est capable de cliquer sur l'écran */
+                /* Il faut donc passer le tour du deuxieme joueur qui sera joué par l'ia ici.*/
+                game.turn++;
+                game.hidingTurn++;
+            }
+
+            // On envoie un message qui indique à l'adversaire que le joueur a posé un pion
+            // Ainsi, son plateau du jeu doit être mis à jour et ça sera à son tour de jouer
+            else if(game.type == GAME_TYPE_PvP_ONLINE)
+            {
+                char message[8];
+
+                SOCKET sock = socket(AF_INET, SOCK_DGRAM, 0);
+                if(sock == INVALID_SOCKET)
+                {
+                    perror("socket()");
+                    exit(EXIT_FAILURE);
+                }
+
+                struct hostent *hostinfo = NULL;
+
+                const char *hostname = HOSTNAME;
+                Uint16 port = PORT;
+
+                hostname = getIPAdress(&port);
+
+                printf("\t[Supp] %s:%d", hostname, port);
+
+                hostinfo = gethostbyname(hostname);
+                if (hostinfo == NULL)
+                {
+                    fprintf (stderr, "Unknown host %s.\n", hostname);
+                    exit(EXIT_FAILURE);
+                }
+
+                    SOCKADDR_IN to = { 0 };
+                    to.sin_addr = *(IN_ADDR *) hostinfo->h_addr;
+                    to.sin_port = htons(port);
+                    to.sin_family = AF_INET;
+                    int tosize = sizeof to;
+
+                sprintf(message, "r%d-0", i);
+
+                printf("\nMessage de suppression:%s\n", message);
+
+                if(sendto(sock, message, strlen(message), 0, (SOCKADDR *)&to, tosize) < 0)
+                {
+                    perror("sendto()");
+                    exit(EXIT_FAILURE);
+                }
+            }
+        }
+    }
+}
+
+void MouvementPhase(int id, int i)
+{
+    partyState = INFO_MOUVEMENT; /* permet de changer le texte informatif pour
+                                        expliquer la phase de mouvement */
+
+    if(focusedVertex[id] == NULL)
+    {
+        if(vertices[i]->owner != NULL && vertices[i]->owner != &game.players[id])
+            printf("Vous n'etes pas proprietaire de cette case.\n");
+
+        else focusedVertex[id] = vertices[i];
+    }
+
+    else
+    {
+        int j = focusedVertex[id]->id;
+
+        // si la régle optionnelle n'est pas active
+        if(game.optionnel == 0 || (game.optionnel == 1 &&
+                game.players[id].activePawns > 3))
+
+        {
+            if(Adjacency[i][j] == 0)
+            {
+                printf("Mouvement impossible.");
+
+                SDL_SetTextureAlphaMod(focusedVertex[id]->pawn.texture, 255);
+
+                focusedVertex[id] = NULL;
+                //break;
+            }
+
+            else if(vertices[i]->owner == NULL)
+            {
+                int vertex =  focusedVertex[id]->id;
+
+                printf("\tisVertexOnMoulin %d", isVertexOnMoulin(vertices[j], Lines));
+                if(isVertexOnMoulin(vertices[j], Lines) != -1)
+                        deleteMoulins(vertices[j], Lines);
+
+                movePawn(&game.players[id], focusedVertex[id], vertices[i]);
+
+                pass = 0;
+
+                printf("[Joueur] Mouvement de %d vers %d\n", focusedVertex[id]->id, i);
+
+                if(Adjacency[ focusedVertex[id]->id ][i] == 0)
+                    printf("[Joueur] Il n'y a pas d'adjacence entre %d et %d\n", focusedVertex[id]->id, i);
+
+                focusedVertex[id] = NULL;
+
+                placed[id] = i;
+
+                game.turn++;
+
+                // Une fois que le joueur a fait bouger son pion, l'ai fera de même
+                if(game.type == GAME_TYPE_PvAI) // AI phase de mouvement
+                {
+                    int ai = 1 - id;
+
+                    if(game.players[ai].activePawns == 3)
+                        ai_saut(ai, placed);
+
+                    else
+                        ai_movement(ai, placed);
+                }
+
+                // On envoie un message qui indique à l'adversaire que le joueur a posé un pion
+                // Ainsi, son plateau du jeu doit être mis à jour et ça sera à son tour de jouer
+                else if(game.type == GAME_TYPE_PvP_ONLINE)
+                {
+                    char message[8];
+
+                    //vertexOwnerMessage(message, id, i);
+
+                    //sendMessage(message, 5);
+
+                    SOCKET sock = socket(AF_INET, SOCK_DGRAM, 0);
+                    if(sock == INVALID_SOCKET)
+                    {
+                        perror("socket()");
+                        exit(EXIT_FAILURE);
+                    }
+
+                    struct hostent *hostinfo = NULL;
+
+                    const char *hostname = HOSTNAME;
+                    Uint16 port = PORT;
+
+                    hostname = getIPAdress(&port);
+
+                    hostinfo = gethostbyname(hostname);
+                    if (hostinfo == NULL)
+                    {
+                        fprintf (stderr, "Unknown host %s.\n", hostname);
+                        exit(EXIT_FAILURE);
+                    }
+
+                    SOCKADDR_IN to = { 0 };
+                    to.sin_addr = *(IN_ADDR *) hostinfo->h_addr;
+                    to.sin_port = htons(port);
+                    to.sin_family = AF_INET;
+                    int tosize = sizeof to;
+
+                    sprintf(message, "m%d-%d", vertex, i);
+
+                    if(sendto(sock, message, strlen(message), 0, (SOCKADDR *)&to, tosize) < 0)
+                    {
+                        perror("sendto()");
+                        exit(EXIT_FAILURE);
+                    }
+                }
+            }
+        }
+
+        else if(game.optionnel == 1 && game.players[id].activePawns == 3)// si la régle optionnelle est active
+        {
+            partyState = INFO_SAUT; /* permet de changer le texte informatif pour
+                                            expliquer la phase de placement */
+
+            if(vertices[i]->owner == NULL)
+            {
+                int vertex = focusedVertex[id]->id;
+
+                printf("\tisVertexOnMoulin %d", isVertexOnMoulin(vertices[j], Lines));
+                if(isVertexOnMoulin(vertices[j], Lines) != -1)
+                    deleteMoulins(vertices[j], Lines);
+
+                movePawn(&game.players[id], focusedVertex[id], vertices[i]);
+
+                focusedVertex[id] = NULL;
+
+                placed[id] = i;
+
+                game.turn++;
+
+                pass = 0;
+
+                if(game.type == GAME_TYPE_PvAI) // AI phase de mouvement
+                {
+                    int ai = 1 - id;
+
+                    if(game.players[ai].activePawns == 3)
+                        ai_saut(ai, placed);
+
+                    else
+                        ai_movement(ai, placed);
+                }
+
+                // On envoie un message qui indique à l'adversaire que le joueur a posé un pion
+                // Ainsi, son plateau du jeu doit être mis à jour et ça sera à son tour de jouer
+                else if(game.type == GAME_TYPE_PvP_ONLINE)
+                {
+                    char message[8];
+
+                    //vertexOwnerMessage(message, id, i);
+
+                    //sendMessage(message, 5);
+
+                    SOCKET sock = socket(AF_INET, SOCK_DGRAM, 0);
+                    if(sock == INVALID_SOCKET)
+                    {
+                        perror("socket()");
+                        exit(EXIT_FAILURE);
+                    }
+
+                    struct hostent *hostinfo = NULL;
+
+                    const char *hostname = HOSTNAME;
+                    Uint16 port = PORT;
+
+                    hostname = getIPAdress(&port);
+
+                    hostinfo = gethostbyname(hostname);
+                    if (hostinfo == NULL)
+                    {
+                        fprintf (stderr, "Unknown host %s.\n", hostname);
+                        exit(EXIT_FAILURE);
+                    }
+
+                    SOCKADDR_IN to = { 0 };
+                    to.sin_addr = *(IN_ADDR *) hostinfo->h_addr;
+                    to.sin_port = htons(port);
+                    to.sin_family = AF_INET;
+                    int tosize = sizeof to;
+
+                    sprintf(message, "m%d-%d", vertex, i);
+
+                    if(sendto(sock, message, strlen(message), 0, (SOCKADDR *)&to, tosize) < 0)
+                    {
+                        perror("sendto()");
+                        exit(EXIT_FAILURE);
+                    }
+                }
+            }
+
+            else printf("[Optionelle] Cette case est occupée.\n");
+        }
+    }
+}
+
+void PlacementPhase(int id, int i)
+{
+    if(vertices[i]->owner == NULL)
+    {
+        if(game.type != GAME_TYPE_PvP_ONLINE)
+        {
+            setVertexOwner(vertices[i], &game.players[id]);
+            setPawnVisibilityState(vertices[i], 1);
+
+            placed[id] = i;
+
+            game.players[id].pawns--;
+
+            game.players[id].activePawns++;
+
+            game.turn++;
+
+            printf("[Joueur] Il a pose un pion au vertice %d\n", i);
+
+            pass = 0;
+
+            if(game.type == GAME_TYPE_PvAI)
+            {
+                /* L'IA va placer ses pions ici */
+
+                int ai = 1 - id;
+
+                ai_positionment(ai, placed);
+            }
+        }
+
+        else
+        {
+            if(id != opponent)
+            {
+                setVertexOwner(vertices[i], &game.players[id]);
+                setPawnVisibilityState(vertices[i], 1);
+
+                placed[id] = i;
+
+                game.players[id].pawns--;
+
+                game.players[id].activePawns++;
+
+                game.turn++;
+
+                printf("[Joueur-LAN] Il a pose un pion au vertice %d\n", i);
+
+                pass = 0;
+
+                char message[8];
+
+                SOCKET sock = socket(AF_INET, SOCK_DGRAM, 0);
+                if(sock == INVALID_SOCKET)
+                {
+                    perror("socket()");
+                    exit(EXIT_FAILURE);
+                }
+
+                struct hostent *hostinfo = NULL;
+
+                const char *hostname = HOSTNAME;
+                Uint16 port = PORT;
+
+                hostname = getIPAdress(&port);
+
+                hostinfo = gethostbyname(hostname);
+                if (hostinfo == NULL)
+                {
+                    fprintf (stderr, "Unknown host %s.\n", hostname);
+                    exit(EXIT_FAILURE);
+                }
+
+                SOCKADDR_IN to = { 0 };
+                to.sin_addr = *(IN_ADDR *) hostinfo->h_addr;
+                to.sin_port = htons(port);
+                to.sin_family = AF_INET;
+                int tosize = sizeof to;
+
+                sprintf(message, "p%d", i);
+
+                if(sendto(sock, message, strlen(message), 0, (SOCKADDR *)&to, tosize) < 0)
+                {
+                    perror("sendto()");
+                    exit(EXIT_FAILURE);
+                }
+            }
+        }
+    }
+
+    else
+    {
+        printf("Cette case est deja occupee.\n");
+
+        displayErrorScreen(id);
+
+        timerError = SDL_AddTimer(ERROR_TIME, removeErrorScreen, NULL); // T = 1000ms = 1s
+    }
+}
+
+void WidgetsManager()
+{
+    Widget wid;
+
+    SDL_Rect RMS;
+    RMS.h = 2; RMS.w = 2; RMS.x = MS.x; RMS.y = MS.y;
+
+    int i = getClickedWidget(screen[menu], &RMS, &wid);
+
+    if(i != -1)
+    {
+        screen[menu]->widgets[i]->clicked = 0;
+
+        setWidgetColor(screen[menu]->widgets[i], white);
+    }
+
+    // Si le joueur fait un clique gauche dans le menu "demarrage"
+    if(menu == MENU_START)
+    {
+        printf("I=%d\n", i);
+        if(i == 1+2)
+            menu = MENU_SETTINGS;
+
+        else if(i == 3+2) quit = SDL_TRUE;
+    }
+
+    // Il doit d'abords configurer sa partie
+    else if(menu == MENU_SETTINGS)
+    {
+        switch(i)
+        {
+            // Les identifiants des widgets commencent de 2 jusqu'à MAX_WIDGETS, d'où le +2.
+            case 1+2: // pvp
+            {
+                if(game.type != GAME_TYPE_PvP)
+                {
+                    game.type = GAME_TYPE_PvP;
+
+                    setWidgetColor(screen[menu]->widgets[i], green);
+                    setWidgetColor(screen[menu]->widgets[i+1], white);
+                    setWidgetColor(screen[menu]->widgets[i+2], white);
+
+                    setWidgetColor(screen[menu]->widgets[4+2], grey);
+                    setWidgetColor(screen[menu]->widgets[5+2], grey);
+
+                    setWidgetClickable(screen[menu]->widgets[4+2], WIDGET_NOT_CLICKABLE);
+                    setWidgetClickable(screen[menu]->widgets[5+2], WIDGET_NOT_CLICKABLE);
+                }
+
+                break;
+            }
+
+            case 2+2: // pvAI
+            {
+                if(game.type != GAME_TYPE_PvAI)
+                {
+                    game.type = GAME_TYPE_PvAI;
+
+                    setWidgetColor(screen[menu]->widgets[i-1], white);
+                    setWidgetColor(screen[menu]->widgets[i], green);
+                    setWidgetColor(screen[menu]->widgets[i+1], white);
+
+                    setWidgetColor(screen[menu]->widgets[3+2], white);
+                    setWidgetColor(screen[menu]->widgets[4+2], white);
+
+                    setWidgetClickable(screen[menu]->widgets[3+2], WIDGET_CLICKABLE);
+                    setWidgetClickable(screen[menu]->widgets[4+2], WIDGET_CLICKABLE);
+                }
+                break;
+            }
+
+            case 3+2: // pvp_lan
+            {
+                if(game.type != GAME_TYPE_PvP_ONLINE)
+                {
+                    game.type = GAME_TYPE_PvP_ONLINE;
+
+                    setWidgetColor(screen[menu]->widgets[i], green);
+                    setWidgetColor(screen[menu]->widgets[i-1], white);
+                    setWidgetColor(screen[menu]->widgets[i-2], white);
+
+                    setWidgetColor(screen[menu]->widgets[4+2], grey);
+                    setWidgetColor(screen[menu]->widgets[5+2], grey);
+
+                    setWidgetClickable(screen[menu]->widgets[4+2], WIDGET_NOT_CLICKABLE);
+                    setWidgetClickable(screen[menu]->widgets[5+2], WIDGET_NOT_CLICKABLE);
+                }
+                break;
+            }
+
+            case 4+2: // facile
+            {
+                if(game.type == GAME_TYPE_PvAI)
+                {
+                    game.difficulty = AI_TYPE_EASY_RANDOM;
+
+                    setWidgetColor(screen[menu]->widgets[i], green);
+                    setWidgetColor(screen[menu]->widgets[i+1], white);
+                }
+                break;
+            }
+
+            case 5+2: // moyen
+            {
+                if(game.type == GAME_TYPE_PvAI)
+                {
+                    game.difficulty = AI_TYPE_MEDIUM;
+
+                    setWidgetColor(screen[menu]->widgets[i-1], white);
+                    setWidgetColor(screen[menu]->widgets[i], green);
+                }
+
+                break;
+            }
+
+            case 6+2: // regle oui
+            {
+                game.optionnel = 1;
+
+                setWidgetColor(screen[menu]->widgets[5+2], green);
+                setWidgetColor(screen[menu]->widgets[6+2], black);
+                /*setWidgetVisible(screen[menu]->widgets[i], 0);
+                setWidgetVisible(screen[menu]->widgets[i+1], 1);*/
+                break;
+            }
+
+            case 7+2: // regle non
+            {
+                game.optionnel = 0;
+
+                setWidgetColor(screen[menu]->widgets[5+2], black);
+                setWidgetColor(screen[menu]->widgets[6+2], red);
+                /*setWidgetVisible(screen[menu]->widgets[i-1], 1);
+                setWidgetVisible(screen[menu]->widgets[i], 0);*/
+                break;
+            }
+
+            case 8+2: // theme_0
+            {
+                setWidgetVisible(screen[1]->widgets[BOARD_THEME_0], 1);
+                setWidgetVisible(screen[1]->widgets[BOARD_THEME_1], 0);
+                setWidgetVisible(screen[1]->widgets[BOARD_THEME_2], 0);
+                break;
+            }
+
+            case 9+2: // theme_1
+            {
+                setWidgetVisible(screen[1]->widgets[BOARD_THEME_0], 0);
+                setWidgetVisible(screen[1]->widgets[BOARD_THEME_1], 1);
+                setWidgetVisible(screen[1]->widgets[BOARD_THEME_2], 0);
+                break;
+            }
+
+            case 10+2: // theme_2
+            {
+                setWidgetVisible(screen[1]->widgets[BOARD_THEME_0], 0);
+                setWidgetVisible(screen[1]->widgets[BOARD_THEME_1], 0);
+                setWidgetVisible(screen[1]->widgets[BOARD_THEME_2], 1);
+                break;
+            }
+
+            case 11+2:
+            {
+                menu = MENU_GAME;
+
+                partyState = INFO_PLACEMENT; /* permet de changer le texte informatif pour
+                                                    expliquer la phase de placement */
+                // Le décompte commence!
+                timer1s = SDL_AddTimer(1000, updateCountdown, &count); // T = 1000ms = 1s
+
+                if(music != NULL)
+                    Mix_PlayMusic(music, -1);
+
+                game.active = 1;
+                break;
+            }
+
+            case 12+2:
+            {
+                menu = MENU_START;
+                break;
+            }
+        }
+    }
+
+    else if(menu == MENU_GAME)
+    {
+        switch(i)
+        {
+            // Les identifiants des widgets commencent de 2 jusqu'à MAX_WIDGETS, d'où le +2.
+            case 3+2: // Recommencer la partie
+            {
+                resetGame();
+
+                partyState = INFO_PLACEMENT;
+
+                game.active = 1;
+                break;
+            }
+
+            case 4+2: // Passer le tour
+            {
+                if(game.type == GAME_TYPE_PvAI)
+                    printf("Il n'est pas possible de passer le tour dans une game contre IA");
+
+                else
+                {
+                    int id; // id du joueur qui joue actuellement
+
+                    id = convertTurn(game.turn); // [voir le fichier game.h]
+
+                    pass++;
+
+                    game.turn++;
+
+                    for(int k = 0; k < 4; k++)
+                    {
+                        if(game.players[id].moulinID[k] != -1)
+                        {
+                            Lines[ game.players[id].moulinID[k] ][3]    =   LINE_USED;
+
+                            game.players[id].moulin--;
+                            game.players[id].moulinID[k] = -1;
+                        }
+                    }
+
+                }
+
+                break;
+            }
+
+            case 5+2:
+            {
+                game.active = 0;
+
+                resetGame();
+
+                menu = MENU_START;
+                break;
+            }
+
+        }
+    }
+}
+
+void LoadPawns()
+{
+    for(int i = 0; i < PLAYER_INITIAL_PAWNS; i++)
+    {
+        for(int j = 0; j < MAX_PLAYERS; j++)
+        {
+            sprites[i][j].imageFile = PAWN_FILE;
+            sprites[i][j].renderer = renderer;
+
+            loadSprite( &(sprites[i][j]) );
+
+
+            setSpritePosition( &(sprites[i][j]), 50*j + 25, 20*i + 100);
+        }
+
+        changeColorSprite( &(sprites[i][0]), blue);
+        changeColorSprite( &(sprites[i][1]), red);
+    }
+}
+
+void DrawWidgets()
+{
+  if(screen[menu] != NULL)
+        for(int i = 2; i < MAX_WIDGETS; i++)
+        {
+            if(screen[menu]->widgets[i] != NULL)
+                drawWidget(screen[menu]->widgets[i]);
+        }
+}
+
+void DrawConfigTexts()
+{
+    for(int i = 0; i < 4; i++)
+        if(gameConfigText[i] != NULL)
+        {
+            if(menu == MENU_SETTINGS) setTextVisible(gameConfigText[i], 1 );
+            else setTextVisible(gameConfigText[i], 0 );
+
+            SDL_SetRenderDrawColor(renderer, white.r, white.g, white.b, white.a);
+            drawText(gameConfigText[i]);
+        }
+}

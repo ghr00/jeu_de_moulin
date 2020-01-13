@@ -4,7 +4,7 @@
 enum lineState
 {
     LINE_INACTIVE, // la ligne est inactive
-    LINE_ACTIVE, // la ligne est active, mais l'effet moulin n'est pas encoe utilisé
+    LINE_ACTIVE, // la ligne est active, mais le bonus moulin n'est pas encoe utilisé
     LINE_USED, // l'effet moulin est utilisé
 };
 
