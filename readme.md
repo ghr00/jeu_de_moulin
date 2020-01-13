@@ -1,4 +1,4 @@
-![Interface du jeu](https://imgur.com/XHw8dh5)
+[Imgur](https://i.imgur.com/XHw8dh5.png)
 
 # Jeu de moulin par Amine Yahemdi
 
