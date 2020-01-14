@@ -33,4 +33,4 @@ int setPlayerAI(Player* player, int type);
 int isPlayerAI(Player player);
 void destroyPlayer(Player* player);
 
-#include "player.c"
+#include "source/player.c"

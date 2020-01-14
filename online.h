@@ -1,3 +1,9 @@
+/**
+Auteur : Amine YAHEMDI (GHR00)
+Description : Les fonctions implementant le mode LAN devait être declaré dans ce fichier, mais le scripting du mode fût
+integré directement au main.c, de ce fait, ce fichier est à moitié inutilisale pour le moment.
+*/
+
 #define ONLINE_CONFIG_FILE  "config.ini"
 
 void getOnlineID(int* id);
@@ -8,5 +14,5 @@ void removePawnMessage(char* str, int vertex);
 void sendMessage(char* message, int len); // envoie un packet UDP à l'adversaire
 int receiveMessage(char* message, int len, int timeout);
 
-#include "online.c"
+#include "source/online.c"
 

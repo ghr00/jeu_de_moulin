@@ -22,4 +22,4 @@ int showScreen(Screen* screen);
 int hideScreen(Screen* screen);
 int getClickedWidget(Screen* gameScreen, SDL_Rect* MS, Widget* widget);
 int destroyScreen(Screen* screen);
-#include "screen.c"
+#include "source/screen.c"

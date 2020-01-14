@@ -1,4 +1,4 @@
-/* Matrice d'adjacence du plateau du jeu
+/** Matrice d'adjacence du plateau du jeu
     Propriétés  :   1. Elle est symetrique.
                     2. Si Adjacency[i][j] = 1, alors il existe un chemin entre le sommet i et sommet j.
                     3. Si Adjacency[i][j] = 0, alors il n'existe aucun chemin entre le sommet i et sommet j. */
@@ -63,4 +63,4 @@ SDL_Rect squares[MAX_SQUARES];
 /* Les sommets qui peuvent contenir des pions sont modelisés dans le tableau de vertices[], ils sont de nombre de 24.*/
 Vertex* vertices[MAX_VERTICES];
 
-#include "map.c"
+#include "source/map.c"

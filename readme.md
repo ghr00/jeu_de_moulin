@@ -12,12 +12,20 @@ Le jeu est téléchargeable dans la partie release.
 Le jeu est aussi compilable/jouable depuis Ubuntu.
 
 # Fiche technique 
+
 Nom du jeu : [Jeu de moulin](https://fr.wikipedia.org/wiki/Jeu_du_moulin)
+
 Type : Stratégie/réflexion
+
 Plateforme : Windows / Ubuntu
+
 Version actuel : 0.2.1
+
 Langage : C
-Librairies utilisés : [SDL2](https://www.libsdl.org/download-2.0.php), [inih](https://github.com/benhoyt/inih)
+
+Librairies utilisées : [SDL2](https://www.libsdl.org/download-2.0.php), [inih](https://github.com/benhoyt/inih)
+
+![Imgur](https://i.imgur.com/od07WWi.png)
 
 # Configuration du mode LAN
 

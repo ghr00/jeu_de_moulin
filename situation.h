@@ -1,3 +1,9 @@
+/**
+Auteur : Amine YAHEMDI (GHR00)
+Description : situation.h et situation.c devait implementer l'algorithme minimax mais l'ia ne fonctionne pas comme prévu,
+tout ce qui est declaré dans ce fichier est inutilisable pour le moment.
+*/
+
 typedef struct situation
 {
     Game game;
@@ -34,4 +40,4 @@ int countSituations();
 void getActivePawns(Situation* situation, int* p1, int id1, int* p2, int id2);
 
 
-#include "situation.c"
+#include "source/situation.c"

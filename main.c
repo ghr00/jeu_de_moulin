@@ -11,11 +11,11 @@
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_mixer.h>
 
-#ifdef WIN32 /* si vous êtes sous Windows */
+#ifdef WIN32
 
 #include <winsock2.h>
 
-#elif defined (linux) /* si vous êtes sous Linux */
+#elif defined (linux)
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -31,7 +31,7 @@ typedef struct sockaddr_in SOCKADDR_IN;
 typedef struct sockaddr SOCKADDR;
 typedef struct in_addr IN_ADDR;
 
-#else /* sinon vous êtes sur une plateforme non supportée */
+#else
 
 #error not defined for this platform
 
@@ -458,7 +458,7 @@ int main(int argc, char *argv[])
 
                         if(placed[id] != -1)
                         {
-                            printf("\t[LAN] (%d, %d)\n", id, opponent);
+                            //printf("\t[LAN] (%d, %d)\n", id, opponent);
 
                             if(game.type != GAME_TYPE_PvP_ONLINE ||
                                (game.type == GAME_TYPE_PvP_ONLINE && id != opponent) )
@@ -863,7 +863,7 @@ void ai_positionment(int ai, int placed[MAX_PLAYERS])
 
     printf("diff %d\n", getAITypeForPlayer( &game.players[ai] ));
 
-    if( getAITypeForPlayer( &game.players[ai] ) == AI_TYPE_MEDIUM )
+    if( getAITypeForPlayer( &game.players[ai] ) == AI_TYPE_DIFFICULT )
     {
         system("CLS");
 
@@ -931,7 +931,7 @@ void ai_positionment(int ai, int placed[MAX_PLAYERS])
         free(decision);
     }
 
-    else if( getAITypeForPlayer( &game.players[ai] ) == AI_TYPE_EASY_RANDOM )
+    else if( getAITypeForPlayer( &game.players[ai] ) != AI_TYPE_NONE )
     {
         /* Vérification si un moulin peut être former */
 
@@ -939,64 +939,71 @@ void ai_positionment(int ai, int placed[MAX_PLAYERS])
         int cmp[2]; /*  *Cas 1: Il est possible de former un moulin
                         *Cas 2: Il est possible de contrer la formation du moulin du joueur adverse
                     */
-        for(int i = 0; i < 16; i++)
+
+        cmp[0] = 0;
+        cmp[1] = 0;
+
+        if( getAITypeForPlayer( &game.players[ai] ) == AI_TYPE_MEDIUM )
         {
-            if(Lines[i][3] != LINE_INACTIVE) continue;
-
-            cmp[0] = 0;
-            cmp[1] = 0;
-
-            int choices[3];
-
-            for(int a = 0; a < 3; a++) choices[a] = 0;
-
-            for(int a = 0; a < 3; a++)
+            for(int i = 0; i < 16; i++)
             {
-                k = Lines[i][a];
+                if(Lines[i][3] != LINE_INACTIVE) continue;
 
-                if(vertices[k]->owner == &(game.players[ai]))
-                {
-                    choices[a] = 1;
+                cmp[0] = 0;
+                cmp[1] = 0;
 
-                    cmp[0]++;
+                int choices[3];
 
-                    cmp[1]--;
-                }
-
-                else if(vertices[k]->owner == &(game.players[id]))
-                {
-                    choices[a] = -1;
-
-                    cmp[0]--;
-
-                    cmp[1]++;
-                }
-            }
-
-            if(cmp[0] == 2)
-            {
-                focus = i;
+                for(int a = 0; a < 3; a++) choices[a] = 0;
 
                 for(int a = 0; a < 3; a++)
                 {
-                    if(choices[a] == 0) u = Lines[i][a];
+                    k = Lines[i][a];
+
+                    if(vertices[k]->owner == &(game.players[ai]))
+                    {
+                        choices[a] = 1;
+
+                        cmp[0]++;
+
+                        cmp[1]--;
+                    }
+
+                    else if(vertices[k]->owner == &(game.players[id]))
+                    {
+                        choices[a] = -1;
+
+                        cmp[0]--;
+
+                        cmp[1]++;
+                    }
                 }
 
-                focusID = 0;
-                break;
-            }
-
-            else if(cmp[1] == 2)
-            {
-                focus = i;
-
-                for(int a = 0; a < 3; a++)
+                if(cmp[0] == 2)
                 {
-                    if(choices[a] == 0) u = Lines[i][a];
+                    focus = i;
+
+                    for(int a = 0; a < 3; a++)
+                    {
+                        if(choices[a] == 0) u = Lines[i][a];
+                    }
+
+                    focusID = 0;
+                    break;
                 }
 
-                focusID = 1;
-                break;
+                else if(cmp[1] == 2)
+                {
+                    focus = i;
+
+                    for(int a = 0; a < 3; a++)
+                    {
+                        if(choices[a] == 0) u = Lines[i][a];
+                    }
+
+                    focusID = 1;
+                    break;
+                }
             }
         }
 
@@ -1039,13 +1046,17 @@ void ai_movement(int ai, int placed[MAX_PLAYERS])
     int u = -1, v =-1;
 
     printf("AI : %d\n", getAITypeForPlayer( &(game.players[ai]) ) );
-    // Dans le cas de l'ai facile aléatoire, le mouvement est aléatoire.
-    if( getAITypeForPlayer( &game.players[ai] ) == AI_TYPE_EASY_RANDOM )
+    // Dans le cas de l'ai facile aléatoire ou moyenne, le mouvement est aléatoire.
+    // Toute fois une ia moyenne se deplace plus intelligement en recherchant avant chaque tour des opportunités (voir searchOpportunity())
+    if( getAITypeForPlayer( &game.players[ai] ) == AI_TYPE_EASY_RANDOM || getAITypeForPlayer( &game.players[ai] ) == AI_TYPE_MEDIUM )
     {
         int cmp = 0;
         // Opportunité : l'ia peut deplacer un pion pour former un moulin
 
-        if(searchOpportunity(ai, &u, &v) == 0)
+        if(getAITypeForPlayer( &game.players[ai] ) == AI_TYPE_MEDIUM && searchOpportunity(ai, &u, &v) != 0)
+            printf("[IA] Il a trouve une opportunite 1 et a decide de deplacer le pion %d vers le sommet %d\n", u, v);
+
+        else
         {
             cmp = 0;
             u = -1;
@@ -1080,7 +1091,6 @@ void ai_movement(int ai, int placed[MAX_PLAYERS])
             printf("[IA] Elle a choisit de se deplacer vers le sommet %d\n", v);
         }
 
-        else printf("[IA] Il a trouve une opportunite 1 et a decide de deplacer le pion %d vers le sommet %d\n", u, v);
     }
 
     //On le fait bouger ici
@@ -1109,8 +1119,9 @@ void ai_saut(int ai, int placed[MAX_PLAYERS])
     int u = -1, v =-1;
 
     printf("[AI, Saut] %d\n", getAITypeForPlayer( &(game.players[ai]) ) );
-    // Dans le cas de l'ai facile aléatoire, le mouvement est aléatoire.
-    if( getAITypeForPlayer( &game.players[ai] ) == AI_TYPE_EASY_RANDOM )
+    // Dans le cas de l'ai facile aléatoire ou moyenne, le mouvement est aléatoire.
+    // Toute fois une ia moyenne se deplace plus intelligement en recherchant avant chaque tour des opportunités (voir searchOpportunity())
+    if( getAITypeForPlayer( &game.players[ai] ) == AI_TYPE_EASY_RANDOM || getAITypeForPlayer( &game.players[ai] ) == AI_TYPE_MEDIUM )
     {
         int cmp = 0;
 
@@ -1267,6 +1278,9 @@ void ai_moulin(int ai, int moulinID)
 void resetGame()
 {
     initializeGame(&game, GAME_TYPE_PvP, 1);
+
+    setWidgetColor(screen[2]->widgets[2+2], white);
+    setWidgetColor(screen[2]->widgets[3+2], white);
 
     setWidgetColor(screen[2]->widgets[1+2], green);
     setWidgetColor(screen[2]->widgets[4+2], grey);
@@ -2116,11 +2130,11 @@ void WidgetsManager()
                     setWidgetColor(screen[menu]->widgets[i], green);
                     setWidgetColor(screen[menu]->widgets[i+1], white);
 
-                    setWidgetColor(screen[menu]->widgets[3+2], white);
                     setWidgetColor(screen[menu]->widgets[4+2], white);
+                    setWidgetColor(screen[menu]->widgets[5+2], white);
 
-                    setWidgetClickable(screen[menu]->widgets[3+2], WIDGET_CLICKABLE);
                     setWidgetClickable(screen[menu]->widgets[4+2], WIDGET_CLICKABLE);
+                    setWidgetClickable(screen[menu]->widgets[5+2], WIDGET_CLICKABLE);
                 }
                 break;
             }

@@ -1,4 +1,8 @@
-
+/**
+Auteur      :   Amine Yahemdi.
+Description :   ce fichier facilite la création de nouveaux sprites, il est indépendant du jeu et peut être utilisé dans n'importe quel
+                projet basé sur la SDL2.
+*/
 typedef struct sprite
 {
     SDL_Surface* image;
@@ -27,4 +31,4 @@ void rotateSpriteBy(Sprite* sprite, double a);
 void unloadSprite(Sprite* sprite);
 int isVisible(Sprite* sprite);
 void setVisibilityState(Sprite* sprite, int state);
-#include "sprite.c"
+#include "source/sprite.c"

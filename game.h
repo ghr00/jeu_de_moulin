@@ -49,4 +49,4 @@ typedef struct game
 int initializeGame(Game* game, enum gameType type, int optionnal_rule);
 int convertTurn(int turn); // convertit le tour en identifiant des joueurs
 int getRendererFlags();
-#include "game.c"
+#include "source/game.c"

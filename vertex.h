@@ -41,4 +41,4 @@ void setVertexList(Vertex* vertex, int matrix[24][24]);
 void setPawnVisibilityState(Vertex* vertex, int visible);
 int isVertexAdjacentToLine(Vertex* vertex, int line, int* adj, Vertex* vertices[], int Lines[][4], int Adjacency[][MAX_VERTICES]);
 
-#include "vertex.c"
+#include "source/vertex.c"

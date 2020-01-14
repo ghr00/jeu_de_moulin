@@ -19,4 +19,4 @@ Countdown* initializeCountdown(SDL_Renderer* renderer, SDL_Color color, int visi
 //Uint32 updateCountdown(Uint32 intervalle, void* _countdown);
 void drawCountdown(Countdown* countdown);
 void destroyCountdown(Countdown* countdown);
-#include "countdown.c"
+#include "source/countdown.c"

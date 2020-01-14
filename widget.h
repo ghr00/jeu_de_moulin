@@ -1,3 +1,11 @@
+
+/**
+Auteur      :   Amine Yahemdi.
+Description :   ce fichier facilite la création de nouveaux composants d'un menu (widget), il est indépendant du jeu et peut être
+                utilisé dans n'importe quel projet basé sur la SDL2.
+                Un ensemble de widget est un 'screen' (voir screen.h).
+*/
+
 enum widgetType
 {
 	WIDGET_TYPE_BUTTON,
@@ -28,4 +36,4 @@ int isWidgetVisible(Widget* widget);
 int setWidgetColor(Widget* widget, SDL_Color color);
 int setWidgetVisible(Widget* widget, int state);
 int setWidgetClickable(Widget* widget, int clickable);
-#include "widget.c"
+#include "source/widget.c"
