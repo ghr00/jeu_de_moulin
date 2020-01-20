@@ -135,12 +135,12 @@ Screen* screen[MAX_SCREENS];
 #define ERROR_TIME      500
 
 SDL_Color orange = {255, 127, 40, 255};
-SDL_Color red = {255, 10, 10, 255};
+SDL_Color red   = {255, 10, 10, 255};
 SDL_Color green = {10, 255, 10, 255};
-SDL_Color blue = {10, 10, 255, 255};
+SDL_Color blue  = {10, 10, 255, 255};
 SDL_Color white = {255, 255, 255, 255};
 SDL_Color black = {0, 0, 0, 255};
-SDL_Color grey = {128, 128, 128, 255};
+SDL_Color grey  = {128, 128, 128, 255};
 
 Text* turnText = NULL;
 Text* playerText = NULL;
@@ -322,15 +322,17 @@ int main(int argc, char *argv[])
     gameConfigText[3]  =   createText(renderer, "coolvetica.ttf", 24, "Theme du plateau", 80, 380, black, 0);
 
     // Initilisation de la partie & joueurs
-    initializePlayer( &(game.players[0]), "joueur", blue); // blue est la couleur du pion du premier joueur
-    initializePlayer( &(game.players[1]), "ai", red); // red est la couleur du pion du second joueur
+    char pseudo[MAX_PLAYERS][MAX_USERNAME_LENGTH];
+    getPlayersUsernames(pseudo[0], pseudo[1]);
+    initializePlayer( &(game.players[0]), pseudo[0], blue); // blue est la couleur du pion du premier joueur
+    initializePlayer( &(game.players[1]), pseudo[1], red); // red est la couleur du pion du second joueur
 
     //createAIForPlayer(AI_TYPE_EASY_RANDOM, &(game.players[0]));
     createAIForPlayer(AI_TYPE_EASY_RANDOM, &(game.players[1])); // Le joueur 2 sera l'IA
     createAIForPlayer(AI_TYPE_MEDIUM, &(game.players[1])); // Le joueur 2 sera l'IA
 
     //setPlayerAI(&(game.players[0]), AI_TYPE_EASY_RANDOM);
-    setPlayerAI(&(game.players[1]), AI_TYPE_EASY_RANDOM);
+    setPlayerAI(&(game.players[1]), AI_TYPE_EASY_RANDOM); // par défaut l'IA est facile-aléatoire
 
     // Ce pointeur stock l'adresse du sommet selectionné par le joueur utilisé par la suite lors de la phase du mouvement.
     // L'IA n'utilise pas cette variable.

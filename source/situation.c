@@ -185,8 +185,8 @@ Situation* generateSituation(Situation* parent, int moulin, int cible)
     newElement->game.players[1].activePawns = parent->game.players[1].activePawns;
     newElement->game.players[0].pawns = parent->game.players[0].pawns;
     newElement->game.players[1].pawns = parent->game.players[1].pawns;
-    newElement->game.players[0].pseudo = parent->game.players[0].pseudo;
-    newElement->game.players[1].pseudo = parent->game.players[1].pseudo;
+    strcpy(newElement->game.players[0].pseudo, parent->game.players[0].pseudo);
+    strcpy(newElement->game.players[1].pseudo, parent->game.players[1].pseudo);
     newElement->previous = NULL;
     newElement->parent = NULL;
     if(parent != NULL) newElement->parent = parent;
@@ -248,8 +248,8 @@ Situation* generateInitialeSituation(Game* game, Vertex* vertices[], int moulin,
     newElement->game.players[1].activePawns = game->players[1].activePawns;
     newElement->game.players[0].pawns = game->players[0].pawns;
     newElement->game.players[1].pawns = game->players[1].pawns;
-    newElement->game.players[0].pseudo = game->players[0].pseudo;
-    newElement->game.players[1].pseudo = game->players[1].pseudo;
+    strcpy(newElement->game.players[0].pseudo, game->players[0].pseudo);
+    strcpy(newElement->game.players[1].pseudo, game->players[1].pseudo);
     newElement->previous = NULL;
     newElement->parent = NULL;
     newElement->value = 0;

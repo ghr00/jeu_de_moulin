@@ -6,10 +6,16 @@ Description : Tout ce qui concerne le joueur est declaré ici.
 #ifndef PLAYER_H
 #define PLAYER_H
 
+#ifndef GAME_CONFIG_FILE
+    #define GAME_CONFIG_FILE  "config.ini"
+#endif // GAME_CONFIG_FILE
+
 #define PLAYER_INITIAL_PAWNS 9
 
 #define MAX_PLAYERS  2
 #define MAX_PLAYER_AI 3 // Nombre de AI par joueur  (facile, moyen, difficile)
+
+#define MAX_USERNAME_LENGTH 24
 
 typedef struct ai
 {
@@ -22,7 +28,7 @@ typedef struct ai
 
 typedef struct player
 {
-    char* pseudo;
+    char pseudo[MAX_USERNAME_LENGTH];
 
     SDL_Color color;
 
@@ -36,7 +42,9 @@ typedef struct player
     int moulinID[4]; // l'id de la ligne moulin qui a donné au joueur la possibilité de supprimer un moulin
 }Player;
 
-void initializePlayer(Player* player, char* pseudo, SDL_Color color);
+void initializePlayer(Player* player, const char pseudo[MAX_USERNAME_LENGTH], SDL_Color color);
+void getPlayersUsernames(char pseudo1[MAX_USERNAME_LENGTH], char pseudo2[MAX_USERNAME_LENGTH]); // charge les pseudos des joueurs depuis le fichier de configuration
+void setPlayerUsername(Player* player, const char* username);
 int setPlayerAI(Player* player, int type);
 int isPlayerAI(Player player);
 void destroyPlayer(Player* player);

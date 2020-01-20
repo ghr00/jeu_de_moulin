@@ -7,7 +7,9 @@ Description : Les structures, les constantes et les fonctions déclarés dans ce f
 #ifndef GAME_H
 #define GAME_H
 
-#define GAME_CONFIG_FILE  "config.ini"
+#ifndef GAME_CONFIG_FILE
+    #define GAME_CONFIG_FILE  "config.ini"
+#endif // GAME_CONFIG_FILE
 
 #define MAX_GAME_TYPES 3
 #define MAX_SQUARES 3

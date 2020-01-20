@@ -56,6 +56,11 @@ Vous pouvez aussi télécharger le fichier "" qui contient le code source et la 
 
 Le projet sera bientôt compilable avec Makefile.
 
+# Bugs connus 
+
+* ALL: Le boutton 'Quitter' durant la partie peut parfois faire crash le jeu.
+* LAN: Le message 'vous pouvez supprimer un moulin' peut apparaitre n'importe quand, toutes fois il n'a aucune influence sur la partie.
+
 # Ce qui est prévu dans la v2.0
 - Une meilleure IA, notamment basé sur l'algorithme minimax
 - Un mode en LAN dynamique (plus besoin de spécifier l'ID) et directement configurable dans le jeu.
