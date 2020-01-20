@@ -33,28 +33,16 @@
 		</VirtualTargets>
 		<Compiler>
 			<Add option="-Wall" />
-			<Add directory="C:/Users/hp/Desktop/jeu_de_moulin/sdl/i686-w64-mingw32/include" />
+			<Add directory="../sdl/i686-w64-mingw32/include" />
 		</Compiler>
 		<Linker>
 			<Add option="-lmingw32 -lws2_32 -lSDL2main -lSDL2 -lSDL2_ttf -lSDL2_image  -lSDL2_mixer -lSDL2_net" />
-			<Add directory="C:/Users/hp/Desktop/jeu_de_moulin/sdl/i686-w64-mingw32/lib" />
+			<Add directory="../sdl/i686-w64-mingw32/lib" />
 		</Linker>
-		<Unit filename="ai.c">
-			<Option compilerVar="CC" />
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
 		<Unit filename="ai.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="countdown.c">
-			<Option compilerVar="CC" />
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
 		<Unit filename="countdown.h">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="game.c">
-			<Option compilerVar="CC" />
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="game.h">
@@ -67,78 +55,79 @@
 		<Unit filename="main.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="map.c">
-			<Option compilerVar="CC" />
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
 		<Unit filename="map.h">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="moulin.c">
-			<Option compilerVar="CC" />
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="moulin.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="online.c">
-			<Option compilerVar="CC" />
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
 		<Unit filename="online.h">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="pawn.c">
-			<Option compilerVar="CC" />
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="pawn.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="player.c">
-			<Option compilerVar="CC" />
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
 		<Unit filename="player.h">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="screen.c">
-			<Option compilerVar="CC" />
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="screen.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="situation.c">
-			<Option compilerVar="CC" />
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
 		<Unit filename="situation.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="sprite.c">
+		<Unit filename="source/ai.c">
 			<Option compilerVar="CC" />
-			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="source/countdown.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="source/game.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="source/map.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="source/moulin.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="source/online.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="source/pawn.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="source/player.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="source/screen.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="source/situation.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="source/sprite.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="source/square.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="source/text.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="source/vertex.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="source/widget.c">
+			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="sprite.h">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="text.c">
-			<Option compilerVar="CC" />
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="text.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="vertex.c">
-			<Option compilerVar="CC" />
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
 		<Unit filename="vertex.h">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="widget.c">
-			<Option compilerVar="CC" />
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="widget.h">

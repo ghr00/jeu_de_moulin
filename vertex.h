@@ -1,4 +1,21 @@
+/**
+Auteur      :   Amine Yahemdi.
+Description :   Vertex signifie ici 'sommet', ce sont les 24 points de forme carrés affichés sur le plateau du jeu et
+                sur lequelles il est possible de poser un pion.
+                Il est possible de définir un pion comme "un sommet controlé par un joueur" et un sommet comme
+                "un pion invisible sur le plateau du jeu", de ce fait j'ai considéré que les sommets et les pions sont la même
+                chose et j'ai declaré tous ce qui les concernent dans 'vertex.h' et 'pawn.h'. Quand une fonction, un parametre ou une
+                variable sont relatifs à un sommet ils portent le nom de 'vertex', quand ils sont relatifs à un pion ils portent
+                le nom de 'pawn'.
+*/
+
+#ifndef VERTEX_H
+#define VERTEX_H
+
 #define MAX_VERTICES 24
+
+/* Line signifie trois sommets adjacents à travrers lequelles une ligne verticale ou horizentale passe, il existe 16 lignes
+de ce type. Si une ligne est active alors il y a un moulin. */
 #define MAX_LINES 16
 
 enum lineState
@@ -35,10 +52,12 @@ void setVertexPosition(Vertex* vertex, int x, int y);
 void setVertexPosition2(Vertex* vertex, SDL_Point point);
 void moveVertexBy(Vertex* vertex, int x, int y);
 void changeVertexColor(Vertex* vertex, SDL_Color color);
+void setPawnVisibilityState(Vertex* vertex, int visible);
 SDL_Rect getVertexRectangle(Vertex* vertex);
 void setVertexOwner(Vertex* vertex, Player* player);
 void setVertexList(Vertex* vertex, int matrix[24][24]);
-void setPawnVisibilityState(Vertex* vertex, int visible);
 int isVertexAdjacentToLine(Vertex* vertex, int line, int* adj, Vertex* vertices[], int Lines[][4], int Adjacency[][MAX_VERTICES]);
 
 #include "source/vertex.c"
+
+#endif // VERTEX_H

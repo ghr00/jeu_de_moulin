@@ -1,3 +1,11 @@
+/**
+Auteur : Amine YAHEMDI (GHR00)
+Description : Tout ce qui concerne le plateau du jeu est declaré ici.
+*/
+
+#ifndef MAP_H
+#define MAP_H
+
 /** Matrice d'adjacence du plateau du jeu
     Propriétés  :   1. Elle est symetrique.
                     2. Si Adjacency[i][j] = 1, alors il existe un chemin entre le sommet i et sommet j.
@@ -64,3 +72,5 @@ SDL_Rect squares[MAX_SQUARES];
 Vertex* vertices[MAX_VERTICES];
 
 #include "source/map.c"
+
+#endif

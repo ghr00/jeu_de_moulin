@@ -854,7 +854,7 @@ void ai_positionment(int ai, int placed[MAX_PLAYERS])
 {
     int id = 1 - ai;
 
-    int u;
+    int u = -1;
 
     //int cmp = 0;
 
@@ -935,7 +935,7 @@ void ai_positionment(int ai, int placed[MAX_PLAYERS])
     {
         /* Vérification si un moulin peut être former */
 
-        int k, focus, focusID;
+        int k, focus = -1, focusID = -1;
         int cmp[2]; /*  *Cas 1: Il est possible de former un moulin
                         *Cas 2: Il est possible de contrer la formation du moulin du joueur adverse
                     */
@@ -1021,14 +1021,17 @@ void ai_positionment(int ai, int placed[MAX_PLAYERS])
 
         printf("[IA] Elle a pose un pion au vertice %d\n", u);
 
-        setVertexOwner(vertices[u], &game.players[ai]);
-        setPawnVisibilityState(vertices[u], 1);
+        if(u != -1)
+        {
+            setVertexOwner(vertices[u], &game.players[ai]);
+            setPawnVisibilityState(vertices[u], 1);
 
-        placed[ai] = u;
+            placed[ai] = u;
 
-        game.players[ai].pawns--;
+            game.players[ai].pawns--;
 
-        game.players[ai].activePawns++;
+            game.players[ai].activePawns++;
+        }
     }
 
     game.turn++;
@@ -1170,7 +1173,7 @@ void ai_moulin(int ai, int moulinID)
 {
     int id = 1 - ai;
 
-    int u;
+    int u = -1;
 
     if( getAITypeForPlayer( &game.players[ai] ) == AI_TYPE_EASY_RANDOM || getAITypeForPlayer( &game.players[ai] ) == AI_TYPE_MEDIUM )
     {
@@ -1268,11 +1271,14 @@ void ai_moulin(int ai, int moulinID)
     // Suppression du pion par l'IA
     printf("[IA] Le pion %d a ete supprime par l'IA.\n",u);
 
-    deletePawn(vertices[u]);
+    if(u != -1)
+    {
+        deletePawn(vertices[u]);
 
-    Lines[ moulinID ][3]    =   LINE_USED;
+        Lines[ moulinID ][3]    =   LINE_USED;
 
-    game.players[1-ai].activePawns--;
+        game.players[1-ai].activePawns--;
+    }
 }
 
 void resetGame()

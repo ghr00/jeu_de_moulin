@@ -1,3 +1,11 @@
+/**
+Auteur : Amine YAHEMDI (GHR00)
+Description : Tout ce qui concerne le joueur est declaré ici.
+*/
+
+#ifndef PLAYER_H
+#define PLAYER_H
+
 #define PLAYER_INITIAL_PAWNS 9
 
 #define MAX_PLAYERS  2
@@ -34,3 +42,5 @@ int isPlayerAI(Player player);
 void destroyPlayer(Player* player);
 
 #include "source/player.c"
+
+#endif

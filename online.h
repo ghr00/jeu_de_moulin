@@ -4,6 +4,9 @@ Description : Les fonctions implementant le mode LAN devait être declaré dans ce
 integré directement au main.c, de ce fait, ce fichier est à moitié inutilisale pour le moment.
 */
 
+#ifndef ONLINE_H
+#define ONLINE_H
+
 #define ONLINE_CONFIG_FILE  "config.ini"
 
 void getOnlineID(int* id);
@@ -16,3 +19,4 @@ int receiveMessage(char* message, int len, int timeout);
 
 #include "source/online.c"
 
+#endif /* ONLINE_H */

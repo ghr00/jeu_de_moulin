@@ -3,6 +3,10 @@ Auteur      :   Amine Yahemdi.
 Description :   ce fichier facilite la création de nouveaux sprites, il est indépendant du jeu et peut être utilisé dans n'importe quel
                 projet basé sur la SDL2.
 */
+
+#ifndef SPRITE_H
+#define SPRITE_H
+
 typedef struct sprite
 {
     SDL_Surface* image;
@@ -21,7 +25,6 @@ typedef struct sprite
     SDL_Rect rect;
 }Sprite;
 
-
 void loadSprite(Sprite* sprite);
 void changeColorSprite(Sprite* sprite, SDL_Color newColor);
 void drawSprite(Sprite* sprite);
@@ -32,3 +35,5 @@ void unloadSprite(Sprite* sprite);
 int isVisible(Sprite* sprite);
 void setVisibilityState(Sprite* sprite, int state);
 #include "source/sprite.c"
+
+#endif // SPRITE_H

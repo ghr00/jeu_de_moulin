@@ -1,3 +1,10 @@
+/**
+Auteur      :   Amine Yahemdi.
+Description :   ce fichier devait servir à définir les décomptes, comme le décompte actuel du jeu a été directement
+                integré au main.c, ce fichier reste inutilisable pour le moment.*/
+
+#ifndef COUNTDOWN_H
+#define COUNTDOWN_H
 
 typedef struct countdown
 {
@@ -20,3 +27,5 @@ Countdown* initializeCountdown(SDL_Renderer* renderer, SDL_Color color, int visi
 void drawCountdown(Countdown* countdown);
 void destroyCountdown(Countdown* countdown);
 #include "source/countdown.c"
+
+#endif

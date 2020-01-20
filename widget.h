@@ -6,6 +6,9 @@ Description :   ce fichier facilite la création de nouveaux composants d'un menu
                 Un ensemble de widget est un 'screen' (voir screen.h).
 */
 
+#ifndef WIDGET_H
+#define WIDGET_H
+
 enum widgetType
 {
 	WIDGET_TYPE_BUTTON,
@@ -37,3 +40,5 @@ int setWidgetColor(Widget* widget, SDL_Color color);
 int setWidgetVisible(Widget* widget, int state);
 int setWidgetClickable(Widget* widget, int clickable);
 #include "source/widget.c"
+
+#endif // WIDGET_H

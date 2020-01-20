@@ -4,6 +4,9 @@ Description : situation.h et situation.c devait implementer l'algorithme minimax
 tout ce qui est declaré dans ce fichier est inutilisable pour le moment.
 */
 
+#ifndef SITUATION_H
+#define SITUATION_H
+
 typedef struct situation
 {
     Game game;
@@ -41,3 +44,5 @@ void getActivePawns(Situation* situation, int* p1, int id1, int* p2, int id2);
 
 
 #include "source/situation.c"
+
+#endif // SITUATION_H

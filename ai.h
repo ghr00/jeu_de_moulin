@@ -1,3 +1,12 @@
+/**
+Auteur      :   Amine Yahemdi.
+Description :   ce fichier définit tous ce qui concenre l'IA, il est indépendant du jeu et peut être utilisé dans n'importe
+                quel projet utilisant la SDL2 .*/
+
+#ifndef AI_H
+#define AI_H
+
+// Constantes pour l'algorithme alpha/beta, inutilisables pour le moment.
 const int A_EVAL = 10;
 const int B_EVAL = 100;
 
@@ -22,3 +31,5 @@ int getAIStateForPlayer(Player* player);
 int getAITypeForPlayer(Player* player);
 int destroyAI(AI* ai);
 #include "source/ai.c"
+
+#endif

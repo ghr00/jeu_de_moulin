@@ -1,3 +1,12 @@
+/**
+Auteur : Amine YAHEMDI (GHR00)
+Description : Les structures, les constantes et les fonctions déclarés dans ce fichier representent le moteur du jeu.
+*/
+
+
+#ifndef GAME_H
+#define GAME_H
+
 #define GAME_CONFIG_FILE  "config.ini"
 
 #define MAX_GAME_TYPES 3
@@ -50,3 +59,5 @@ int initializeGame(Game* game, enum gameType type, int optionnal_rule);
 int convertTurn(int turn); // convertit le tour en identifiant des joueurs
 int getRendererFlags();
 #include "source/game.c"
+
+#endif /* GAME_H */

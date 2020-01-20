@@ -9,6 +9,10 @@ Description :   La structure text permet de gérer plus facilement les textes qui
                 Les fichiers text.h et text.c sont indépendants du jeu et peuvent être utilisés dans n'importe quel projet
                 qui utilise SDL2 et SDL2_TTF.
 */
+
+#ifndef TEXT_H
+#define TEXT_H
+
 typedef struct text
 {
     SDL_Surface* image;
@@ -35,3 +39,5 @@ void unloadText(Text* text);
 void destroyText(Text* text);
 
 #include "source/text.c"
+
+#endif // TEXT_H

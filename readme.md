@@ -44,7 +44,14 @@ Pour jouer contre un joueur connecté depuis un autre PC, il faut :
 2. Posseder son IP local, cette derniére est acessible depuis la commande ipconfig
 3. Le champs "ID=" doit comporter la valeur 0 ou 1 et doit être opposé à celui enregistré dans le fichier config.ini de l'adversaire. Ainsi, si l'adversaire choisit d'être le premier joueur (ID=0), il faut configurer (ID=1) dans le fichier config.ini.
 ## Utiliser Hamachi
-Si vous n'êtes pas connecté à un réseau local, vous pouvez en créer un virtuellement en utilisant le logiciel [Hamachi](https://www.logmein.com/). 
+Si vous n'êtes pas connecté à un réseau local, vous pouvez en créer un virtuellement en utilisant le logiciel [Hamachi](https://www.logmein.com/).
+
+# Compiler sous Code::Blocks
+
+Pour compiler le projet sous Code:Blocks il ne faut pas oublier de modifier les parametres du projet dans Project > Build Options > moulin > Search Directories et modifier les chemins indiqués dans Compiler et Linker pour indiquer l'emplacement de la SDL2 et ses extensions SDL_ttf, SDL_image et SDL_mixer. Il est préférable que les extensions soient installées dans le même dossier que la SDL2.
+
+Vous pouvez aussi télécharger le fichier "" qui contient le code source et la SDL2+ses exentions pré-installés.
+
 # Makefile
 
 Le projet sera bientôt compilable avec Makefile.
