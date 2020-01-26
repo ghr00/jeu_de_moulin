@@ -25,15 +25,16 @@ typedef struct text
 
     TTF_Font* font;
 
-    char* text;
-    char* newText;
+    const char* text;
+    const char* newText;
 
     SDL_Rect rect;
 }Text;
 
-Text* createText(SDL_Renderer* renderer, char* fontFile, int fontSize, char* value, int x, int y, SDL_Color color, int visible);
+Text* createText(SDL_Renderer* renderer, const char* fontFile, int fontSize, const char* value, int x, int y, SDL_Color color, int visible);
 void setTextPosition(Text* text, int x, int y);
 void drawText(Text* text);
+void changeTextValue(Text* text, const char* newText);
 void setTextVisible(Text* text, int visible);
 void unloadText(Text* text);
 void destroyText(Text* text);

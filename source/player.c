@@ -1,3 +1,39 @@
+#ifndef STR_IMPL_
+    #define STR_IMPL_(x) #x      //stringify argument
+#endif // STR_IMPL_
+
+#ifdef PLAYER_ID
+    undef PLAYER_ID
+#endif // PLAYER_ID
+
+#ifdef GET_PSEUDO
+    undef GET_PSEUDO
+#endif // GET_PSEUDO
+
+// Cette macro (GET_PSEUDO) sert à charger les pseudos des joueurs dans la fonction getPlayersUsernames
+#define PLAYER_ID(x) STR_IMPL_(x)  //indirection to expand argument macros
+
+#define GET_PSEUDO(id)  _pseudo = "Erreur"PLAYER_ID(id)""; \
+                        _pseudo = ini_get(file, "Game", "Player" PLAYER_ID(id) "");  \
+                        if(_pseudo != NULL) \
+                            strcpy(pseudo##id, _pseudo);
+
+void getPlayersUsernames(char pseudo1[MAX_USERNAME_LENGTH], char pseudo2[MAX_USERNAME_LENGTH])
+{
+    ini_t* file = NULL;
+
+    file = ini_load(GAME_CONFIG_FILE);
+
+    if(file == NULL)
+        printf("Echec du chargement du fichier ONLINE_CONFIG_FILE\n");
+
+    const char* _pseudo;
+
+    GET_PSEUDO(1);
+    GET_PSEUDO(2);
+
+    ini_free(file);
+}
 
 void initializePlayer(Player* player, const char pseudo[MAX_USERNAME_LENGTH], SDL_Color color)
 {
@@ -14,30 +50,6 @@ void initializePlayer(Player* player, const char pseudo[MAX_USERNAME_LENGTH], SD
     for(int k = 0; k < 4; k++) player->moulinID[k] = -1;
 }
 
-void getPlayersUsernames(char pseudo1[MAX_USERNAME_LENGTH], char pseudo2[MAX_USERNAME_LENGTH])
-{
-    ini_t* file = NULL;
-
-    file = ini_load(GAME_CONFIG_FILE);
-
-    if(file == NULL)
-        printf("Echec du chargement du fichier ONLINE_CONFIG_FILE\n");
-
-    const char* _pseudo;
-
-    _pseudo = "Erreur1"; // par défaut le pseudo 'Erreur' indique que le chargement a été mal éxecuté.
-    _pseudo = ini_get(file, "Game", "Player1");
-     printf("pseudo:%s",_pseudo);
-    if(_pseudo != NULL && _pseudo[0] != '/0') strcpy(pseudo1, _pseudo);
-
-
-
-    _pseudo = "Erreur2"; // par défaut le pseudo 'Erreur' indique que le chargement a été mal éxecuté.
-    _pseudo = ini_get(file, "Game", "Player2");
-    //strcpy(pseudo2, _pseudo);
-
-    ini_free(file);
-}
 int setPlayerAI(Player* player, int type)
 {
     if(player->ai[type] != NULL)

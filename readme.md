@@ -23,7 +23,7 @@ Version actuel : 0.2.1
 
 Langage : C
 
-Librairies utilisées : [SDL2](https://www.libsdl.org/download-2.0.php), [inih](https://github.com/benhoyt/inih)
+Librairies utilisées : [SDL2](https://www.libsdl.org/download-2.0.php), [ini](https://github.com/rxi/ini)
 
 ![Imgur](https://i.imgur.com/od07WWi.png)
 
@@ -48,9 +48,11 @@ Si vous n'êtes pas connecté à un réseau local, vous pouvez en créer un virt
 
 # Compiler sous Code::Blocks
 
-Pour compiler le projet sous Code:Blocks il ne faut pas oublier de modifier les parametres du projet dans Project > Build Options > moulin > Search Directories et modifier les chemins indiqués dans Compiler et Linker pour indiquer l'emplacement de la SDL2 et ses extensions SDL_ttf, SDL_image et SDL_mixer. Il est préférable que les extensions soient installées dans le même dossier que la SDL2.
+Pour compiler le projet sous Code:Blocks il ne faut pas oublier de modifier les parametres du projet dans Project > Build Options > moulin > Search Directories et modifier les chemins indiqués dans Compiler et Linker pour indiquer l'emplacement de la SDL2 et ses extensions SDL_ttf, SDL_image et SDL_mixer. 
 
-Vous pouvez aussi télécharger le fichier "" qui contient le code source et la SDL2+ses exentions pré-installés.
+> Il est préférable que les extensions soient installées dans le même dossier que la SDL2.
+
+Vous pouvez aussi télécharger le fichier __jeu_de_moulin-Stable-Project__ disponible dans la partie release qui contient le code source et la SDL2+ses exentions pré-installés.
 
 # Makefile
 

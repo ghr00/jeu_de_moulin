@@ -36,7 +36,7 @@
 			<Add directory="../sdl/i686-w64-mingw32/include" />
 		</Compiler>
 		<Linker>
-			<Add option="-lmingw32 -lws2_32 -lSDL2main -lSDL2 -lSDL2_ttf -lSDL2_image  -lSDL2_mixer -lSDL2_net" />
+			<Add option="-lmingw32 -lws2_32 -lSDL2main -lSDL2 -lSDL2_ttf -lSDL2_image  -lSDL2_mixer" />
 			<Add directory="../sdl/i686-w64-mingw32/lib" />
 		</Linker>
 		<Unit filename="ai.h">

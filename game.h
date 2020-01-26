@@ -14,6 +14,8 @@ Description : Les structures, les constantes et les fonctions déclarés dans ce f
 #define MAX_GAME_TYPES 3
 #define MAX_SQUARES 3
 
+#define DEFAULT_FONT_SIZE 24
+
 const int SCREEN_FPS        =   20;
 const int SCREEN_WIDTH      =   860;
 const int SCREEN_HEIGHT     =   620;
@@ -59,7 +61,11 @@ typedef struct game
 
 int initializeGame(Game* game, enum gameType type, int optionnal_rule);
 int convertTurn(int turn); // convertit le tour en identifiant des joueurs
+const char* getFont();
+const char* getMusicFile();
 int getRendererFlags();
+int getFontSize();
+int getMusicVolume();
 #include "source/game.c"
 
 #endif /* GAME_H */

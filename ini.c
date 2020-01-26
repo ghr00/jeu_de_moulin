@@ -197,7 +197,7 @@ ini_t* ini_load(const char *filename) {
   rewind(fp);
 
   /* Load file content into memory, null terminate, init end var */
-  ini->data = malloc(sz + 1);
+  ini->data = (char*)malloc(sz + 1);
   ini->data[sz] = '\0';
   ini->end = ini->data  + sz;
   n = fread(ini->data, 1, sz, fp);

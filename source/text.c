@@ -1,4 +1,4 @@
-Text* createText(SDL_Renderer* renderer, char* fontFile, int fontSize, char* value, int x, int y, SDL_Color color, int visible)
+Text* createText(SDL_Renderer* renderer, const char* fontFile, int fontSize, const char* value, int x, int y, SDL_Color color, int visible)
 {
     Text* text = (Text*)malloc(sizeof(Text));
 
@@ -16,7 +16,20 @@ Text* createText(SDL_Renderer* renderer, char* fontFile, int fontSize, char* val
     }
 
     text->image = TTF_RenderText_Solid(text->font, value, color);
+
+    if(text->image == NULL)
+    {
+        printf("Erreur createText() : %s ", TTF_GetError());
+        return NULL;
+    }
+
     text->texture = SDL_CreateTextureFromSurface(renderer, text->image);
+
+    if(text->image == NULL)
+    {
+        printf("Erreur createText() : %s ", SDL_GetError());
+        return NULL;
+    }
 
     text->rect.x = x;
     text->rect.y = y;
@@ -35,7 +48,7 @@ void setTextPosition(Text* text, int x, int y)
     text->rect.y = y;
 }
 
-void changeTextValue(Text* text, char* newText)
+void changeTextValue(Text* text, const char* newText)
 {
     text->newText = newText;
 }
