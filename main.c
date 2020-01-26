@@ -1,6 +1,33 @@
-/* Auteur   : Amine YAHEMDI
-   Version  : 0.2 R2
-   Date de début : 06/12/2019, 12:30*/
+/** Auteur      : Amine YAHEMDI
+  * Version     : 0.2.3C
+  * Date de fin : 21/01/2020, 12:30
+  * Lien Github : github.com/ghr00/jeu_de_moulin
+  **/
+
+/************************************************************************************
+ *                                  Expat License                                   *
+ *  ------------------------------------------------------------------------------  *
+ * Copyright 2020 Amine Yahemdi/GHR00                                               *
+ *                                                                                  *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy     *
+ * of this software and associated documentation files (the "Software"), to deal    *
+ * in the Software without restriction, including without limitation the rights     *
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell        *
+ * copies of the Software, and to permit persons to whom the Software is            *
+ * furnished to do so, subject to the following conditions:                         *
+ *                                                                                  *
+ * The above copyright notice and this permission notice shall be included in       *
+ * all copies or substantial portions of the Software.                              *
+ *                                                                                  *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR       *
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,         *
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE      *
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER           *
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,    *
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE    *
+ * SOFTWARE.                                                                        *
+ *                                                                                  *
+ ************************************************************************************/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -66,6 +93,7 @@ typedef struct in_addr IN_ADDR;
 int Random(int min, int max);
 
 void resetGame();
+void resetTexts();
 
 void initializeSquares(SDL_Renderer* renderer);
 void drawMap(SDL_Renderer* rendrer);
@@ -114,6 +142,7 @@ void DrawConfigTexts();
 
 // ------------------------------------- displayErrorScreen :
 // Colore temporairement la fenetre si le joueur fait une mauvaise action
+// id : id du joueur (0 ou 1)
 void displayErrorScreen(int id);
 
 enum menuID
@@ -148,6 +177,7 @@ Text* moulinText = NULL;
 Text* gameText = NULL;
 Text* countdownText = NULL;
 Text* pawnText = NULL;
+Text* randomPlayerText = NULL;
 Text* gameConfigText[4];
 Mix_Music* music;
 
@@ -186,6 +216,9 @@ char playerChar[32];
 char moulinChar[64];
 char gameChar[64];
 char countdownChar[16];
+char randomPlayerChar[32];
+
+int randomPlayer = -1; // l'id du joueur qui a été choisi aléatoirement pour commencer une partie
 
 int main(int argc, char *argv[])
 {
@@ -196,8 +229,13 @@ int main(int argc, char *argv[])
 
     //Countdown* countdown = NULL;
 
-    srand(time(NULL));
+    const char* FONT = getFont();
+    const int FONT_SIZE = getFontSize();
 
+    const char* MUSIC_FILE = getMusicFile();
+    const int MUSIC_VOLUME = getMusicVolume();
+
+    srand(time(NULL));
 
     if(0 != SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER))
     {
@@ -309,17 +347,18 @@ int main(int argc, char *argv[])
     setWidgetClickable(screen[2]->widgets[5+2], WIDGET_NOT_CLICKABLE);
 
     // Initialisation des outils pour la gestion des textes
-    turnText        =   createText(renderer, "coolvetica.ttf", 24, "Tour:", 15, 0, black, 1);
-    playerText      =   createText(renderer, "coolvetica.ttf", 24, "Joueur:", 330, 0, black, 1);
-    moulinText      =   createText(renderer, "coolvetica.ttf", 24, "Moulin!", 175, 500, black, 0);
-    gameText        =   createText(renderer, "coolvetica.ttf", 24, "Etat du jeu", 175, 500, black, 0);
-    countdownText   =   createText(renderer, "coolvetica.ttf", 24, "0s", 680, 0, black, 1);
-    pawnText        =   createText(renderer, "coolvetica.ttf", 24, "Les pions", 15, 65, black, 1);
+    turnText        =   createText(renderer, FONT, FONT_SIZE, "Tour:", 15, 0, black, 1);
+    playerText      =   createText(renderer, FONT, FONT_SIZE, "Joueur:", 330, 0, black, 1);
+    moulinText      =   createText(renderer, FONT, FONT_SIZE, "Moulin!", 175, 500, black, 0);
+    gameText        =   createText(renderer, FONT, FONT_SIZE, "Etat du jeu", 175, 500, black, 0);
+    countdownText   =   createText(renderer, FONT, FONT_SIZE, "0s", 680, 0, black, 1);
+    pawnText        =   createText(renderer, FONT, FONT_SIZE, "Les pions", 15, 65, black, 1);
+    randomPlayerText=   createText(renderer, FONT, FONT_SIZE, "randomPlayer", 125, 500, black, 1);
 
-    gameConfigText[0]  =   createText(renderer, "coolvetica.ttf", 24, "Type de la partie", 80, 80, black, 0);
-    gameConfigText[1]  =   createText(renderer, "coolvetica.ttf", 24, "Niveau de l'IA", 80, 180, black, 0);
-    gameConfigText[2]  =   createText(renderer, "coolvetica.ttf", 24, "Activer la regle optionnelle", 80, 280, black, 0);
-    gameConfigText[3]  =   createText(renderer, "coolvetica.ttf", 24, "Theme du plateau", 80, 380, black, 0);
+    gameConfigText[0]  =   createText(renderer, FONT, FONT_SIZE, "Type de la partie", 80, 80, black, 0);
+    gameConfigText[1]  =   createText(renderer, FONT, FONT_SIZE, "Niveau de l'IA", 80, 180, black, 0);
+    gameConfigText[2]  =   createText(renderer, FONT, FONT_SIZE, "Activer la regle optionnelle", 80, 280, black, 0);
+    gameConfigText[3]  =   createText(renderer, FONT, FONT_SIZE, "Theme du plateau", 80, 380, black, 0);
 
     // Initilisation de la partie & joueurs
     char pseudo[MAX_PLAYERS][MAX_USERNAME_LENGTH];
@@ -349,10 +388,10 @@ int main(int argc, char *argv[])
     for(int u = 0; u < 24; u++) setVertexList(vertices[u], Adjacency);
 
     // Initilisations des musiques et des sons
-    music = Mix_LoadMUS("audio/music.mp3");
+    music = Mix_LoadMUS(MUSIC_FILE);
     pawnSound = Mix_LoadWAV("audio/pawn.wav");
 
-    Mix_Volume(1, MIX_MAX_VOLUME);
+    Mix_Volume(1, MUSIC_VOLUME);
 
     if(music == NULL)
         fprintf(stderr, "Echec du chargement de la musique.");
@@ -377,7 +416,7 @@ int main(int argc, char *argv[])
     /*if(music != NULL)
         Mix_PlayMusic(music, -1);*/
 
-    /*if(activeEventsThread == 0)
+    /*if(activeEventsThread == 0) 
     {
         eventsThread = SDL_CreateThread(eventsFunction, "eventsFunction", NULL);
         SDL_DetachThread(eventsThread);
@@ -697,6 +736,43 @@ int main(int argc, char *argv[])
                 printf("\t[Blocked] Le joueur 1 est bloque.\n");
             }
 
+            /* Ceci permet de vérifier si le jeu vient tout juste d'être lancé, dans ce cas on affiche aux joueurs un message
+                comme quoi que le premier joueur qui va placer un pion sur le plateau a été choisi de maniére aléatoire. */
+            int onGameStart =(  (game.players[0].activePawns == 0 && game.players[0].pawns > 0) ||
+                                (game.players[1].activePawns == 0 && game.players[1].pawns > 0)     );
+
+            if(game.active != 0 && gameText != NULL)
+            {
+                setTextVisible(randomPlayerText, onGameStart);
+
+                if( onGameStart ) // si on est toujours aux premiers tours du jeu
+                {
+                    if(randomPlayer == -1)
+                    {
+                        randomPlayer = Random(0, 1);
+
+                        if(randomPlayer == 1)
+                        {
+                            game.turn++;
+                            game.hidingTurn++;
+
+                            id = convertTurn(game.turn);
+                        }
+                        printf("[RandomPlayer] Aleatoirement, c'est %d qui fut choisi.\n", randomPlayer);
+                    }
+
+                    sprintf(randomPlayerChar, "%s a ete choisi aleatoirement pour commencer le jeu",
+                            game.players[randomPlayer].pseudo);
+
+                    randomPlayerText->color = game.players[randomPlayer].color;
+
+                    changeTextValue(randomPlayerText, randomPlayerChar);
+
+                    updateText(randomPlayerText);
+                    drawText(randomPlayerText);
+                }
+            }
+
             if(/*game.active && */game.players[0].pawns < 1 && game.players[0].activePawns < 3) // le joueur 1 a gagné
             {
                 game.active = 0;
@@ -791,23 +867,23 @@ int main(int argc, char *argv[])
     }
 
     /* Déchargement */
-    destroyText(turnText);
-    destroyText(playerText);
-    destroyText(moulinText);
-    destroyText(gameText);
-    for(int i = 0; i < 4; i++) destroyText(gameConfigText[i]);
+    if(turnText != NULL)    destroyText(turnText);
+    if(playerText != NULL)  destroyText(playerText);
+    if(moulinText != NULL)  destroyText(moulinText);
+    if(gameText != NULL)    destroyText(gameText);
+    for(int i = 0; i < 4; i++) if(gameConfigText[i] != NULL) destroyText(gameConfigText[i]);
 
-    destroyScreen(screen[0]);
-    destroyScreen(screen[1]);
-    destroyScreen(screen[2]);
+    for(int i = 0; i < 3; i++) if( screen[i] != NULL )  destroyScreen(screen[i]);
     destroyPlayer(& (game.players[0]) );
     destroyPlayer(& (game.players[1]) );
 
     /*if(countdown != NULL)
        destroyCountdown(countdown);*/
 
-    Mix_FreeMusic(music);
-    Mix_FreeChunk(pawnSound);
+    if(music != NULL)
+        Mix_FreeMusic(music);
+    if(pawnSound != NULL)
+        Mix_FreeChunk(pawnSound);
 
     if(NULL != renderer)
         SDL_DestroyRenderer(renderer);
@@ -826,7 +902,8 @@ int main(int argc, char *argv[])
 
 int Random(int min, int max)
 {
-    return rand() % (max - min) + min + 1;
+    return min + rand() % (max+1 - min);
+    //return rand() % (max - min) + min + 1;
 }
 
 Uint32 updateCountdown(Uint32 intervalle, void* Count)
@@ -1287,6 +1364,7 @@ void resetGame()
 {
     initializeGame(&game, GAME_TYPE_PvP, 1);
 
+
     setWidgetColor(screen[2]->widgets[2+2], white);
     setWidgetColor(screen[2]->widgets[3+2], white);
 
@@ -1298,12 +1376,7 @@ void resetGame()
     setWidgetClickable(screen[2]->widgets[4+2], WIDGET_NOT_CLICKABLE);
     setWidgetClickable(screen[2]->widgets[5+2], WIDGET_NOT_CLICKABLE);
 
-    changeTextValue(turnText, "Tour:");
-    changeTextValue(playerText, "Joueur:");
-    changeTextColor(playerText, black);
-    changeTextValue(moulinText, "Moulin!");
-    changeTextValue(gameText, "Etat du jeu");
-    changeTextValue(countdownText, "0s");
+    resetTexts();
 
     for(int i = 0; i < MAX_PLAYERS; i++)
     {
@@ -1328,20 +1401,30 @@ void resetGame()
     }
 
     for(int i = 0; i < MAX_LINES; i++)
-    {
         Lines[i][3] = LINE_INACTIVE;
-    }
 
     partyState = 0; // phase actuel de la partie (placement, mouvement, saut)
     count = 1; // temps du jeu en seconde
     pass = 0;
     lastTime = 0;
+    randomPlayer = -1; // premier joueur à jouer
 
     SDL_RemoveTimer(timer1s);
 
     Mix_PauseMusic();
 
     printf("\tPartie redemarre.\n");
+}
+
+void resetTexts()
+{
+    changeTextValue(turnText, "Tour:");
+    changeTextValue(playerText, "Joueur:");
+    changeTextColor(playerText, black);
+    changeTextValue(moulinText, "Moulin!");
+    changeTextValue(gameText, "Etat du jeu");
+    changeTextValue(countdownText, "0s");
+    changeTextValue(randomPlayerText, "randomPlayer");
 }
 
 int moulinCanBeFormed(int id, int line, Vertex* vertices[], int Lines[][4])
@@ -1430,7 +1513,7 @@ static int onlineFunction(void* params)
 
     int id = convertTurn(game.turn);
 
-    char buffer[1024];
+    char buffer[64];
 
     SOCKET sock = socket(AF_INET, SOCK_DGRAM, 0);
     if(sock == INVALID_SOCKET)
@@ -1448,7 +1531,7 @@ static int onlineFunction(void* params)
 
     hostname = getIPAdress(&port);
 
-    printf("HOST %s\tPORT %d", hostname, port);
+    printf("\nHOST %s\tPORT %d\n", hostname, port);
 
     sin.sin_addr.s_addr = htonl(INADDR_ANY);
     sin.sin_family = AF_INET;
@@ -2095,9 +2178,24 @@ void WidgetsManager()
     // Si le joueur fait un clique gauche dans le menu "demarrage"
     if(menu == MENU_START)
     {
-        printf("I=%d\n", i);
-        if(i == 1+2)
+        //printf("I=%d\n", i);
+        if(i == 1+2) // Jouer
             menu = MENU_SETTINGS;
+
+        else if(i == 2+2) // Ouvre le  fichier de configuration (seulement dans Windows)
+        {
+            #ifdef WIN32
+
+            HINSTANCE notepad = ShellExecute(NULL, NULL, GAME_CONFIG_FILE, NULL, NULL, SW_SHOWNORMAL);
+
+            printf("[Options] Output : %d", (int)notepad);
+
+            #else
+
+            printf("Vous n'etes pas sur Windows, pour acceder au fichier de configuration, ouvrez directement %s dans le dossier de votre jeu.", GAME_CONFIG_FILE);
+
+            #endif // WIN32
+        }
 
         else if(i == 3+2) quit = SDL_TRUE;
     }
@@ -2195,8 +2293,8 @@ void WidgetsManager()
             {
                 game.optionnel = 1;
 
-                setWidgetColor(screen[menu]->widgets[5+2], green);
-                setWidgetColor(screen[menu]->widgets[6+2], black);
+                setWidgetColor(screen[menu]->widgets[6+2], green);
+                setWidgetColor(screen[menu]->widgets[7+2], black);
                 /*setWidgetVisible(screen[menu]->widgets[i], 0);
                 setWidgetVisible(screen[menu]->widgets[i+1], 1);*/
                 break;
@@ -2206,8 +2304,8 @@ void WidgetsManager()
             {
                 game.optionnel = 0;
 
-                setWidgetColor(screen[menu]->widgets[5+2], black);
-                setWidgetColor(screen[menu]->widgets[6+2], red);
+                setWidgetColor(screen[menu]->widgets[6+2], black);
+                setWidgetColor(screen[menu]->widgets[7+2], red);
                 /*setWidgetVisible(screen[menu]->widgets[i-1], 1);
                 setWidgetVisible(screen[menu]->widgets[i], 0);*/
                 break;
@@ -2272,6 +2370,11 @@ void WidgetsManager()
 
                 partyState = INFO_PLACEMENT;
 
+                timer1s = SDL_AddTimer(1000, updateCountdown, &count); // T = 1000ms = 1s
+
+                if(music != NULL)
+                    Mix_PlayMusic(music, -1);
+
                 game.active = 1;
                 break;
             }
@@ -2312,6 +2415,7 @@ void WidgetsManager()
                 game.active = 0;
 
                 resetGame();
+
 
                 menu = MENU_START;
                 break;
