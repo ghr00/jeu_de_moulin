@@ -1,6 +1,6 @@
 /**
 Auteur : Amine YAHEMDI (GHR00)
-Description : Les structures, les constantes et les fonctions déclarés dans ce fichier representent le moteur du jeu.
+Description : Les structures, les constantes et les fonctions déclarés dans ce fichier representent le noyau du jeu.
 */
 
 
@@ -12,7 +12,6 @@ Description : Les structures, les constantes et les fonctions déclarés dans ce f
 #endif // GAME_CONFIG_FILE
 
 #define MAX_GAME_TYPES 3
-#define MAX_SQUARES 3
 
 #define DEFAULT_FONT_SIZE 24
 
@@ -28,7 +27,7 @@ enum gameType
     GAME_TYPE_PvP_ONLINE
 };
 
-char gameType[MAX_GAME_TYPES][32] = { {"Joueur contre Joueur"}, {"Joueur contre Ordinateur"}, {"Joueur contre Joueur (en ligne)"} };
+const char gameType[MAX_GAME_TYPES][32] = { {"Joueur contre Joueur"}, {"Joueur contre Ordinateur"}, {"Joueur contre Joueur (en ligne)"} };
 
 typedef struct game
 {
@@ -61,6 +60,7 @@ typedef struct game
 
 int initializeGame(Game* game, enum gameType type, int optionnal_rule);
 int convertTurn(int turn); // convertit le tour en identifiant des joueurs
+void resetGame(Game* game, enum gameType type); // redemarrer la partie
 const char* getFont();
 const char* getMusicFile();
 int getRendererFlags();

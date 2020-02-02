@@ -30,6 +30,12 @@ int setAIStateForPlayer(Player* player, int state);
 int getAIStateForPlayer(Player* player);
 int getAITypeForPlayer(Player* player);
 int destroyAI(AI* ai);
-#include "source/ai.c"
+
+void ai_positionment(int ai, int placed[MAX_PLAYERS]);
+void ai_movement(int ai, int placed[MAX_PLAYERS]);
+void ai_saut(int ai, int placed[MAX_PLAYERS]);
+void ai_moulin(int ai, int moulinID);
+
+int searchOpportunity(int ai, int* u, int* v);
 
 #endif

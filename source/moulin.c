@@ -38,7 +38,7 @@ void searchMoulin(Player* player, Vertex* vertices[MAX_VERTICES], int Lines[][4]
     }
 }
 
-int isVertexOnMoulin(Vertex* vertex, int Lines[][4])
+int isVertexInMoulin(Vertex* vertex, int Lines[][4])
 {
     int u = -1;
 
@@ -61,6 +61,27 @@ int isVertexOnMoulin(Vertex* vertex, int Lines[][4])
     return u;
 }
 
+int moulinCanBeFormed(int id, int line, Vertex* vertices[], int Lines[][4])
+{
+    int u, cmp;
+    cmp = 0;
+
+    for(int p = 0; p < 3; p++)
+    {
+        u = Lines[line][p];
+
+        if(vertices[u]->owner == &(game.players[id]))
+            cmp++;
+
+        else if(vertices[u]->owner == &(game.players[1-id]))
+            cmp--;
+    }
+
+    if(cmp == 2)
+        return 1;
+
+    return 0;
+}
 
 void deleteMoulins(Vertex* vertex, int Lines[][4])
 {

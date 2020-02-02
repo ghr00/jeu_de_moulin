@@ -1,0 +1,159 @@
+[v0.0.1 - 23/11/2019]
+
+- Les bases : interface, affichage du plateau, cliquer sur sommet affiche un pion, chaque joueur a une couleur, les deux phases du jeu.
+
+[v0.0.2 - 24/11/2019]
+
+- Ajout de SDL_TTF : le nombre de tour est dorénavant affiché sur l'écran
+- Les pions restants par joueur est affiché à l'écran
+- Ajout de la matrice d'adjacence qui permet de limiter les mouvements lors de la deuxieme phase du jeu.
+- Lorsqu'on clique sur un pion en étant dans la phase de mouvement, il est coloré differement (effet selectionné).
+
+[v0.0.3 - 25/11/2019]
+ 
+- La position des sommets et des pions est ajustée.
+- Ajout du moulin : Si trois pions du même owner sont alignés sur une ligne droite, alors le joueur qui a aligné peut
+supprimer un pion du joueur adversaire qui n'est pas en moulin.
+- Ajout de la régle optionnelle (le saut).
+- Si un joueur a moins de 3 pions, il perd la partie.
+
+[v0.0.4 - 30/11/2019]
+
+- Aprés avoir cliquer sur le bouton 'jouer', il est possible de :
+	- Choisir le type de la partie : PvP, PvAI. [F]
+	- Choisir le niveau de difficulté de l'IA. [F]
+
+- Ajout du type IA "facile aléatoire" [T]
+
+- La phase de moulin ne peut avoir lieu qu'une fois. [F]
+- Un joueur ne peut plus supprimer un pion qui appartient à un moulin. [F]
+- Si le joueur fait bouger un pion qui est en formation de moulin, le moulin est cassé. [F]
+- Correction d'un bug lors du quel on peut pas supprimer un pion ayant constitué un double moulin. [F]
+
+- (IA) Correction d'un bug : il arrive parfois lors de la phase que le pion de l'ia écrase le pion du joueur. [F]
+- (IA) Correction d'un bug : la phase du moulin du joueur fait bug l'IA. [T]
+- (IA) Correction d'un bug : le mouvement d'un pion d'un moulin par l'IA le casse. [T]
+- (IA) Correction des crashs de l'IA "facile aléatoire". [T]
+
+[v0.1 - 06/12/2019]
+
+- Ajout de SDL2_Image. [F]
+- Ajout de SDL2_Mixer. [F]
+
+- Configuration de la partie:
+	- L'activation de la régle optionelle a été corrigé. [F]
+	- (SDL_Image) Il est possible de choisir le théme du plateau du jeu. [F]
+
+- IA Facile:
+	- La phase de saut est joué correctement. [F]
+	- Avant de placer un pion, l'ia verifie si le joueur va former un moulin, dans ce cas elle met un pion sur cette ligne pour l'empecher. [F]
+	- Avant de placer un pion, l'ia verifie aussi si il lui est possible de former un moulin, dans ce cas elle le forme. [F]
+	- Quand elle est capable de supprimer un pion, l'ia va preferer de supprimer les pions qui sont sur le point de former un moulin. [F]
+
+- (SDL_Mixer) Ajout du son. 
+	- Musique d'ambiance. [F]
+	- Son lorsqu'on on pose un pion. [T]
+	- Son lorsqu'on supprime un pion.
+	- Son lorsqu'on selectione un pion.
+	- Son lorsqu'on deplace un pion.
+
+Régles du jeu
+- Ajout de la régle "double moulin" : si le joueur crée deux moulins, il pourra supprimer deux pions. [F, T.ai]
+- Ajout de la régle "blocus" : si un joueur ne peut plus se deplacer, il perd la partie. [F]
+
+GUI
+- Agrandissement de la fenetre du programme (800x560 vers 860x620) [F]
+- (SDL_Image) Ajout d'une banniere. [E]
+- (SDL_Image) Amélioration graphique du plateau du jeu. [E]
+- Ajout d'une configuration initiale pour la partie (pvp et régle optionele activé). [F]
+- Ajout d'un effet de clique sur les bouttons. [F]
+- Ajout de la possibilité de "passer le tour", si deux joueurs passent, le jeu s'arrête. [F]
+- Ajout de la possibilité de "recommencer" la partie. [T]
+- Ajout de la possibilité de "quitter" la partie. [T]
+- Ajout de la possibilité de "quitter" la configuration de la partie. [F]
+- Ajout d'un décompte de temps. [F]
+- Ajout de textes informatifs lors de la partie. [F]
+- Les pions restants à poser sont affichés colorés sous une forme graphique. [F]
+- Il n'est pas possible de choisir le niveau de difficulté de l'ia si on choisit le mode PvP. [F]
+- Optimisation : Le FPS a été fixé à 20. [E]
+		 Ajout de la fonctionnalité VSYNC. [F]
+		 Les données du jeu sont correctement libérées à la fermeture du jeu, cela inclut : [E]
+			-  Les textures et les sprites.
+			-  Les données temporaires du jeu.
+
+- Correction de bugs :
+	Il est possible de ne supprimer aucun pion lors de la phase du moulin pour corriger bug_4.png . [F]
+	La destruction du moulin au déplacement d'un pion se fait correctement. [T]
+
+- Compilation en version release. [F]
+
+[v0.2 - Decembre 2020] 
+
+Base
+	- Réorganisation des fichiers de jeu dans trois repertoires : sprites, interface, audio. [F]
+	- Réorganisation du code source dans ? repertoires : graphics, ai, 
+	
+IA niveau facile
+	- Quand elle est capable de se deplacer ou de sauter, l'ia va preferer de deplacer son pion sur une ligne comportant deux pions pour former un moulin. [T]
+	- Quand elle est capable de se deplacer ou de sauter, l'ia va preferer de deplacer son pion sur une ligne comportant deux pions adverses pour contrer le joueur.
+
+IA niveau moyen
+	- Ajout du type IA "moyen". [F]
+	- Implantation de l'algorithme "minimax" avec une profondeur de vision de N tours. [T]
+	- Une situation est définie par le tableau des sommets vertices[MAX_VERTICES] et la structure game. [F]
+	- La fonction d'évaluation prend en parametre une situation et l'id du joueur courant et calcule à partir de vertices[] la difference entre le nombre de pions 
+	du joueur et et de l'ia et entre le nombre de moulins du joueur et de l'ia.
+
+			eval(vertices, game, ai) = a*(nbr_pions_ai - nbr_pions_joueur) + b*(nbr_moulins_ai - nbr_moulins_joueur)
+
+	avec a et b des constantes tel que a < b (posseder des moulins étant plus avantageux que posseder des pions)
+
+	- La situation joué par l'ia est la situation avec la valeur de la fonction d'évaluation la plus haute.
+
+Effets graphiques
+	- L'écran rougit ou bleurit temporairement si un joueur fait une action interdite. [T/2]
+
+- Il est possible de configurer l'ia de sorte qu'elle joue lentement, comme un humain.
+
+Correction de bugs :
+	- Recommencer une partie "joueur contre ia" se fait correctement.
+	- La liberation des donnees generés par l'algorithme minimax se fait correctement.
+	- La gestion des tours lors d'un jeu contre l'ia se fait correctement. [!!]
+
+
+[v0.2.1]
+- Ajout d'un mode en ligne en LAN. [F]
+	- Implementation de SDL2_Net. 
+	- Le fichier de configuration est lan.cfg, accessible depuis la racine du jeu, son contenue est le suivant :
+		IP=
+		PORT=
+		USERNAME=
+	- En accedant au mode en ligne depuis le menu de lancement, il est possible d'heberger une partie ou de se connecter à une partie hebergée.
+	- En hebergeant une partie, 
+	- A chaque changement d'état dans le plateau du jeu, le nouveau état est transmis au joueur adverse par une connexion UDP
+
+
+Effets graphiques
+	- Ajout d'un effet lorsqu'on pose un pion sur le plateau.
+
+- Compatibiltié avec Ubuntu. [F]
+
+[v0.2.2 ]
+
+- Version stable du jeu.
+
+[v0.3 - prévu]
+
+Menu du lancement
+	- Ajout d'une option "Options" dans le menu de lancement.
+		- Il est possible de configurer le volume de l'audio.
+		
+	- Ajout d'une options "Informations" dans le menu du lancement.
+		- Un écran contenant les regles du jeu est affiché.
+
+	- Ajout d'une option "Credits" dans le menu du lancement.
+	- Ajout d'un tableau de score accessible depuis le menu de lancement.
+
+- Ajout d'une connexion avec une base de donnée externe.
+	- A chaque fin de partie, les informations sur la partie sont envoyées à une base de données.
+

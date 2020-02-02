@@ -87,40 +87,22 @@ typedef struct in_addr IN_ADDR;
 #define     BOARD_THEME_2   2+2
 
 // Informations de connexion à l'opposant par défaut
-#define     HOSTNAME    "172.16.136.93"//"192.168.43.102"
+#define     HOSTNAME    "172.16.136.93"
 #define     PORT        49152
 
 int Random(int min, int max);
 
-void resetGame();
 void resetTexts();
-
-void initializeSquares(SDL_Renderer* renderer);
-void drawMap(SDL_Renderer* rendrer);
-
-void ai_positionment(int ai, int placed[MAX_PLAYERS]);
-void ai_movement(int ai, int placed[MAX_PLAYERS]);
-void ai_saut(int ai, int placed[MAX_PLAYERS]);
-void ai_moulin(int ai, int moulinID);
-
-int moulinCanBeFormed(int id, int line, Vertex* vertices[], int Lines[][4]);
-int searchOpportunity(int ai, int* u, int* v);
-//int isPlayerBlocked(int id);
 
 Uint32 updateCountdown(Uint32 intervalle, void* Count);
 Uint32 removeErrorScreen(Uint32 intervalle, void* params);
 
 static int onlineFunction(void* params);
 static int drawingFunction(void* params);
-//static int loadingFunction(void* params);
-//static int eventsFunction(void* params);
 
 // Permet d'entrer en mode listining UDP indépendament du programme
 SDL_Thread* onlineThread = NULL;
 SDL_Thread* drawingThread = NULL;
-// Chargement du jeu indépendament de son execution
-//SDL_Thread* loadingThread = NULL;
-//
 SDL_Thread* eventsThread = NULL;
 
 int activeOnlineThread = 0;
@@ -278,7 +260,6 @@ int main(int argc, char *argv[])
     }
 
     flags = getRendererFlags();
-    //renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);//);
     renderer = SDL_CreateRenderer(window, -1, flags);
     if(NULL == renderer)
     {
@@ -329,8 +310,8 @@ int main(int argc, char *argv[])
     addWidgetToScreen(screen[2], "interface/button_lan.png", WIDGET_TYPE_BUTTON, 510, 80, renderer);
     addWidgetToScreen(screen[2], "interface/button_easy.png", WIDGET_TYPE_BUTTON, 300, 180, renderer);
     addWidgetToScreen(screen[2], "interface/button_medium.png", WIDGET_TYPE_BUTTON, 400, 180, renderer);
-    addWidgetToScreen(screen[2], "interface/button_no.png", WIDGET_TYPE_BUTTON, 360, 260, renderer);
-    addWidgetToScreen(screen[2], "interface/button_yes.png", WIDGET_TYPE_BUTTON, 475, 260, renderer);
+    addWidgetToScreen(screen[2], "interface/button_no.png", WIDGET_TYPE_BUTTON, 370, 260, renderer);
+    addWidgetToScreen(screen[2], "interface/button_yes.png", WIDGET_TYPE_BUTTON, 485, 260, renderer);
     addWidgetToScreen(screen[2], "interface/button_theme_0.jpg", WIDGET_TYPE_BUTTON, 300, 380, renderer);
     addWidgetToScreen(screen[2], "interface/button_theme_1.jpg", WIDGET_TYPE_BUTTON, 420, 380, renderer);
     addWidgetToScreen(screen[2], "interface/button_theme_2.jpg", WIDGET_TYPE_BUTTON, 540, 380, renderer);
@@ -355,10 +336,10 @@ int main(int argc, char *argv[])
     pawnText        =   createText(renderer, FONT, FONT_SIZE, "Les pions", 15, 65, black, 1);
     randomPlayerText=   createText(renderer, FONT, FONT_SIZE, "randomPlayer", 125, 500, black, 1);
 
-    gameConfigText[0]  =   createText(renderer, FONT, FONT_SIZE, "Type de la partie", 80, 80, black, 0);
-    gameConfigText[1]  =   createText(renderer, FONT, FONT_SIZE, "Niveau de l'IA", 80, 180, black, 0);
-    gameConfigText[2]  =   createText(renderer, FONT, FONT_SIZE, "Activer la regle optionnelle", 80, 280, black, 0);
-    gameConfigText[3]  =   createText(renderer, FONT, FONT_SIZE, "Theme du plateau", 80, 380, black, 0);
+    gameConfigText[0]  =   createText(renderer, FONT, 22, "Type de la partie", 80, 80, grey, 0);
+    gameConfigText[1]  =   createText(renderer, FONT, 22, "Niveau de l'IA", 80, 180, grey, 0);
+    gameConfigText[2]  =   createText(renderer, FONT, 22, "Activer la regle optionnelle", 80, 280, grey, 0);
+    gameConfigText[3]  =   createText(renderer, FONT, 22, "Theme du plateau", 80, 380, grey, 0);
 
     // Initilisation de la partie & joueurs
     char pseudo[MAX_PLAYERS][MAX_USERNAME_LENGTH];
@@ -413,20 +394,8 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    /*if(music != NULL)
-        Mix_PlayMusic(music, -1);*/
-
-    /*if(activeEventsThread == 0) 
-    {
-        eventsThread = SDL_CreateThread(eventsFunction, "eventsFunction", NULL);
-        SDL_DetachThread(eventsThread);
-        activeEventsThread = 1;
-    }*/
-
     while(!quit)
     {
-        //SDL_WaitEvent(&event);
-
         SDL_GetMouseState(&(MS.x), &(MS.y));
 
         while(SDL_PollEvent(&event))
@@ -450,7 +419,6 @@ int main(int argc, char *argv[])
             }*/
             if(event.type == SDL_MOUSEBUTTONUP)
             {
-                //
                 if(event.button.button == SDL_BUTTON_LEFT)
                     WidgetsManager();
             }
@@ -585,15 +553,7 @@ int main(int argc, char *argv[])
                 if(opponent == -1)
                     getOnlineID(&opponent);
 
-                //opponent = 0;
-
-                //printf("L'opponent : %d", opponent);
-
-                //printf("(%d, %d)\n", id, opponent);
-                if(id != 2)//opponent)
-                {
-                    //char buffer[1024];
-
+                if(id != 2)
                     if(activeOnlineThread == 0)
                     {
                         activeOnlineThread = 1;
@@ -608,9 +568,8 @@ int main(int argc, char *argv[])
                         printf("Creation et detachement du thread online\n");
                     }
 
-                }
-
             }
+
             if(isPlayerAI(game.players[0]))
                 setPlayerAI(&(game.players[0]), game.difficulty);
 
@@ -620,15 +579,7 @@ int main(int argc, char *argv[])
             SDL_SetRenderDrawColor(renderer, black.r, black.g, black.b, black.a);
 
             if(activeDrawingThread == 0)
-            {
-                //activeDrawingThread = 1;
-
-                //drawingThread = SDL_CreateThread(drawingFunction, "drawingFunction", NULL);
-                //SDL_DetachThread(drawingThread);
-                //drawingThread = NULL;
-
                 drawingFunction(NULL);
-            }
 
             if(partyState != 0)
             {
@@ -720,6 +671,7 @@ int main(int argc, char *argv[])
                 updateText(pawnText);
                 drawText(pawnText);
             }
+
             // Les conditions pour vérifier la victoire des joueurs sont ici.
 
             if(game.active != 0 && game.players[0].pawns < 1 && isPlayerBlocked(&game, vertices, 0))
@@ -741,7 +693,7 @@ int main(int argc, char *argv[])
             int onGameStart =(  (game.players[0].activePawns == 0 && game.players[0].pawns > 0) ||
                                 (game.players[1].activePawns == 0 && game.players[1].pawns > 0)     );
 
-            if(game.active != 0 && gameText != NULL)
+            if(game.active != 0 && game.type == GAME_TYPE_PvP && gameText != NULL)
             {
                 setTextVisible(randomPlayerText, onGameStart);
 
@@ -903,7 +855,6 @@ int main(int argc, char *argv[])
 int Random(int min, int max)
 {
     return min + rand() % (max+1 - min);
-    //return rand() % (max - min) + min + 1;
 }
 
 Uint32 updateCountdown(Uint32 intervalle, void* Count)
@@ -911,6 +862,7 @@ Uint32 updateCountdown(Uint32 intervalle, void* Count)
     int* count = (int*)Count;
 
     (*count)++;
+
     return intervalle;
 }
 
@@ -927,495 +879,6 @@ Uint32 removeErrorScreen(Uint32 intervalle, void* params)
     return intervalle;
 }
 
-// piz3awi
-
-void ai_positionment(int ai, int placed[MAX_PLAYERS])
-{
-    int id = 1 - ai;
-
-    int u = -1;
-
-    //int cmp = 0;
-
-    if(game.players[ai].activeAI == NULL)
-        printf("[IA] IA nulle\n");
-
-    printf("diff %d\n", getAITypeForPlayer( &game.players[ai] ));
-
-    if( getAITypeForPlayer( &game.players[ai] ) == AI_TYPE_DIFFICULT )
-    {
-        system("CLS");
-
-        Situation* courante = generateInitialeSituation(&game, vertices, 0, -1);
-
-        printf("courante %p\n", courante);
-
-        printf("\n\n\n\n\n\n\n\n\t______________ MINIMAX _______________\n");
-
-        if(situationsPile != NULL)
-        {
-            free(situationsPile);
-
-            printf("Liberation de la pile des situations\n");
-
-            situationsPile = NULL;
-        }
-
-
-        Situation* decision = minimax(courante, initialDepth, ai, 0, -1);
-
-        printf("Resultat de minimax: %p de valeur %d\n", decision, eval(decision, ai));
-
-        free(courante);
-
-        for(int i = 0; i < MAX_VERTICES; i++)
-        {
-            if(decision->vertices[i]->owner == NULL) //&game.players[ai])
-            {
-                printf("\tDECISION %d\n", i);
-            }
-
-            else
-            {
-                printf("\tDECISION %d, owner %s\n", i, decision->vertices[i]->owner->pseudo);
-
-            }
-        }
-
-        for(int i = 0; i < MAX_VERTICES; i++)
-        {
-            if(vertices[i]->owner != decision->vertices[i]->owner)
-            {
-                const char* s1 = decision->vertices[i]->owner->pseudo;
-                const char* s2 = game.players[ai].pseudo;
-
-                printf("[%d] \tS1 %s - S2 %s\n", i, s1, s2);
-
-                if(!strcmp(s1, s2))
-                {
-                    printf("[IA-Minimax] Elle a pose un pion au vertice %d\n", i);
-
-                    setVertexOwner(vertices[i], &game.players[ai]);
-                    setPawnVisibilityState(vertices[i], 1);
-
-                    placed[ai] = i;
-
-                    game.players[ai].pawns--;
-
-                    game.players[ai].activePawns++;
-                }
-            }
-        }
-
-        free(decision);
-    }
-
-    else if( getAITypeForPlayer( &game.players[ai] ) != AI_TYPE_NONE )
-    {
-        /* Vérification si un moulin peut être former */
-
-        int k, focus = -1, focusID = -1;
-        int cmp[2]; /*  *Cas 1: Il est possible de former un moulin
-                        *Cas 2: Il est possible de contrer la formation du moulin du joueur adverse
-                    */
-
-        cmp[0] = 0;
-        cmp[1] = 0;
-
-        if( getAITypeForPlayer( &game.players[ai] ) == AI_TYPE_MEDIUM )
-        {
-            for(int i = 0; i < 16; i++)
-            {
-                if(Lines[i][3] != LINE_INACTIVE) continue;
-
-                cmp[0] = 0;
-                cmp[1] = 0;
-
-                int choices[3];
-
-                for(int a = 0; a < 3; a++) choices[a] = 0;
-
-                for(int a = 0; a < 3; a++)
-                {
-                    k = Lines[i][a];
-
-                    if(vertices[k]->owner == &(game.players[ai]))
-                    {
-                        choices[a] = 1;
-
-                        cmp[0]++;
-
-                        cmp[1]--;
-                    }
-
-                    else if(vertices[k]->owner == &(game.players[id]))
-                    {
-                        choices[a] = -1;
-
-                        cmp[0]--;
-
-                        cmp[1]++;
-                    }
-                }
-
-                if(cmp[0] == 2)
-                {
-                    focus = i;
-
-                    for(int a = 0; a < 3; a++)
-                    {
-                        if(choices[a] == 0) u = Lines[i][a];
-                    }
-
-                    focusID = 0;
-                    break;
-                }
-
-                else if(cmp[1] == 2)
-                {
-                    focus = i;
-
-                    for(int a = 0; a < 3; a++)
-                    {
-                        if(choices[a] == 0) u = Lines[i][a];
-                    }
-
-                    focusID = 1;
-                    break;
-                }
-            }
-        }
-
-        if(cmp[0] != 2 && cmp[1] != 2)
-        {
-            /* Recherche aléatoire d'une case vide */
-            do
-            {
-                u = Random(0, MAX_VERTICES-1);
-            }
-            while( vertices[u]->owner == &(game.players[ai]) || vertices[u]->owner == &(game.players[id]) );
-        }
-
-        else printf("[IA] Moulin %d doit remplie ! [cas:%d]\n", focus, focusID);
-
-        printf("[IA] Elle a pose un pion au vertice %d\n", u);
-
-        if(u != -1)
-        {
-            setVertexOwner(vertices[u], &game.players[ai]);
-            setPawnVisibilityState(vertices[u], 1);
-
-            placed[ai] = u;
-
-            game.players[ai].pawns--;
-
-            game.players[ai].activePawns++;
-        }
-    }
-
-    game.turn++;
-    game.hidingTurn++;
-}
-
-
-void ai_movement(int ai, int placed[MAX_PLAYERS])
-{
-    /* Seul le joueur est capable de cliquer sur l'écran */
-    /* Il faut donc passer le tour du deuxieme joueur qui sera joué par l'ia ici.*/
-    game.turn++;
-    game.hidingTurn++;
-
-    int u = -1, v =-1;
-
-    printf("AI : %d\n", getAITypeForPlayer( &(game.players[ai]) ) );
-    // Dans le cas de l'ai facile aléatoire ou moyenne, le mouvement est aléatoire.
-    // Toute fois une ia moyenne se deplace plus intelligement en recherchant avant chaque tour des opportunités (voir searchOpportunity())
-    if( getAITypeForPlayer( &game.players[ai] ) == AI_TYPE_EASY_RANDOM || getAITypeForPlayer( &game.players[ai] ) == AI_TYPE_MEDIUM )
-    {
-        int cmp = 0;
-        // Opportunité : l'ia peut deplacer un pion pour former un moulin
-
-        if(getAITypeForPlayer( &game.players[ai] ) == AI_TYPE_MEDIUM && searchOpportunity(ai, &u, &v) != 0)
-            printf("[IA] Il a trouve une opportunite 1 et a decide de deplacer le pion %d vers le sommet %d\n", u, v);
-
-        else
-        {
-            cmp = 0;
-            u = -1;
-            v = -1;
-
-            do
-            {
-                u = Random(0, MAX_VERTICES-1);
-
-                cmp++;
-            }
-            while( !(vertices[u]->owner == &game.players[ai] && isPawnMovable(vertices[u], vertices) != 0) );
-
-            printf("[IA] Elle a choisit de deplacer le pion %d\n", u);
-
-            // Une fois un pion aléatoire trouvé, on le fait bouger
-            // Pour cela, on aura besoin d'une case vide, on recherche une nouvelle fois!
-
-            cmp = 0;
-
-            do
-            {
-                v = Random(0, MAX_VERTICES-1);
-
-                //if(cmp > MAX_VERTICES*2) break;
-
-                cmp++;
-            }
-            while( !(vertices[v]->owner == NULL
-                            && Adjacency[u][v] == 1) ) ;
-
-            printf("[IA] Elle a choisit de se deplacer vers le sommet %d\n", v);
-        }
-
-    }
-
-    //On le fait bouger ici
-    //u étant l'id du sommet qui contient le pion à bouger
-    //v étant l'id du sommet vide où sera bouger le pion
-
-    printf("[AI] Mouvement de %d vers %d\n", u, v);
-
-    if(isVertexOnMoulin(vertices[u], Lines) != -1)
-        deleteMoulins(vertices[u], Lines);
-
-    if(Adjacency[u][v] == 0)
-        printf("[AI] Il n'y a pas d'adjacence entre %d et %d\n", u, v);
-
-    movePawn(&game.players[ai], vertices[u], vertices[v]);
-    placed[ai] = u;
-}
-
-void ai_saut(int ai, int placed[MAX_PLAYERS])
-{
-    /* Seul le joueur est capable de cliquer sur l'écran */
-    /* Il faut donc passer le tour du deuxieme joueur qui sera joué par l'ia ici.*/
-    game.turn++;
-    game.hidingTurn++;
-
-    int u = -1, v =-1;
-
-    printf("[AI, Saut] %d\n", getAITypeForPlayer( &(game.players[ai]) ) );
-    // Dans le cas de l'ai facile aléatoire ou moyenne, le mouvement est aléatoire.
-    // Toute fois une ia moyenne se deplace plus intelligement en recherchant avant chaque tour des opportunités (voir searchOpportunity())
-    if( getAITypeForPlayer( &game.players[ai] ) == AI_TYPE_EASY_RANDOM || getAITypeForPlayer( &game.players[ai] ) == AI_TYPE_MEDIUM )
-    {
-        int cmp = 0;
-
-        do
-        {
-            u = Random(0, MAX_VERTICES-1);
-
-            cmp++;
-        }
-        while( !(vertices[u]->owner == &game.players[ai] && isPawnMovable(vertices[u], vertices) != 0) );
-
-        printf("[AI, Saut] Elle a choisit de deplacer le pion %d\n", u);
-
-        // Une fois un pion aléatoire trouvé, on le fait bouger
-        // Pour cela, on aura besoin d'une case vide, on recherche une nouvelle fois!
-
-        cmp = 0;
-
-        do
-        {
-            v = Random(0, MAX_VERTICES-1);
-
-            //if(cmp > MAX_VERTICES*2) break;
-
-            cmp++;
-        }
-        while( !(vertices[v]->owner == NULL) ) ;
-
-        printf("[AI, Saut] Elle a choisit de se deplacer vers le sommet %d\n", v);
-    }
-
-    //On le fait bouger ici
-    //u étant l'id du sommet qui contient le pion à bouger
-    //v étant l'id du sommet vide où sera bouger le pion
-
-    printf("[AI, Saut] Mouvement de %d vers %d\n", u, v);
-
-    if(isVertexOnMoulin(vertices[u], Lines) != -1)
-        deleteMoulins(vertices[u], Lines);
-
-    movePawn(&game.players[ai], vertices[u], vertices[v]);
-    placed[ai] = u;
-}
-
-void ai_moulin(int ai, int moulinID)
-{
-    int id = 1 - ai;
-
-    int u = -1;
-
-    if( getAITypeForPlayer( &game.players[ai] ) == AI_TYPE_EASY_RANDOM || getAITypeForPlayer( &game.players[ai] ) == AI_TYPE_MEDIUM )
-    {
-        /* Vérification si un moulin peut être former par le joueur */
-
-        int k, focus, focusID;
-        int cmp; /*  Il est possible de contrer la formation du moulin du joueur adverse */
-
-        for(int i = 0; i < 16; i++)
-        {
-            if(Lines[i][3] != LINE_INACTIVE) continue;
-
-            cmp = 0;
-
-            int choices[3];
-
-            for(int a = 0; a < 3; a++) choices[a] = 0;
-
-            for(int a = 0; a < 3; a++)
-            {
-                k = Lines[i][a];
-                if(vertices[k]->owner == &(game.players[id]))
-                {
-                    choices[a] = -1;
-
-                    cmp++;
-                }
-
-                else if(vertices[k]->owner == &(game.players[ai]))
-                {
-                    choices[a] = 1;
-
-                    cmp--;
-                }
-            }
-
-            if(cmp == 2)
-            {
-                focus = i;
-
-                for(int a = 0; a < 3; a++)
-                {
-                    if(choices[a] == -1) u = Lines[i][a];
-                }
-
-                focusID = 1;
-                break;
-            }
-        }
-
-        if(cmp != 2)
-        {
-            do
-            {
-                u = Random(0, MAX_VERTICES-1);
-                printf("[IA] %d\n", u);
-            }
-            while(vertices[u]->owner != &(game.players[id]) || isVertexOnMoulin(vertices[u], Lines) != -1);
-        }
-
-        else printf("[IA, ai_moulin] Moulin %d est sur le point d'etre former ! [cas:%d]\n", focus, focusID);
-
-    }
-
-    /*else if( getAITypeForPlayer( &game.players[ai] ) == AI_TYPE_MEDIUM )
-    {
-        Situation* courante = generateSituation(NULL, &game, vertices, 1, 1-ai);
-
-        printf("courante %p\n", courante);
-
-        printf("\n\n\n\n\n\n\n\n\t______________ MINIMAX-MOULIN _______________\n");
-
-        initialDepth = 2;
-
-        if(situationsPile != NULL)
-        {
-            free(situationsPile);
-
-            printf("Liberation de la pile des situations\n");
-
-            situationsPile = NULL;
-        }
-
-        Situation* decision = minimax(courante, initialDepth, ai, 1, 1-ai);
-
-        printf("Resultat de minimax: %p, %d\n", decision, decision->moulin);
-
-        free(courante);
-
-        u = decision->moulin;
-
-        free(decision);
-    }*/
-
-    // Suppression du pion par l'IA
-    printf("[IA] Le pion %d a ete supprime par l'IA.\n",u);
-
-    if(u != -1)
-    {
-        deletePawn(vertices[u]);
-
-        Lines[ moulinID ][3]    =   LINE_USED;
-
-        game.players[1-ai].activePawns--;
-    }
-}
-
-void resetGame()
-{
-    initializeGame(&game, GAME_TYPE_PvP, 1);
-
-
-    setWidgetColor(screen[2]->widgets[2+2], white);
-    setWidgetColor(screen[2]->widgets[3+2], white);
-
-    setWidgetColor(screen[2]->widgets[1+2], green);
-    setWidgetColor(screen[2]->widgets[4+2], grey);
-    setWidgetColor(screen[2]->widgets[5+2], grey);
-    setWidgetColor(screen[2]->widgets[6+2], green);
-    setWidgetColor(screen[2]->widgets[7+2], black);
-    setWidgetClickable(screen[2]->widgets[4+2], WIDGET_NOT_CLICKABLE);
-    setWidgetClickable(screen[2]->widgets[5+2], WIDGET_NOT_CLICKABLE);
-
-    resetTexts();
-
-    for(int i = 0; i < MAX_PLAYERS; i++)
-    {
-         //game.players[i].pseudo = "";
-
-        game.players[i].pawns = PLAYER_INITIAL_PAWNS;
-
-        game.players[i].activePawns = 0;
-
-        game.players[i].moulin = 0;
-
-        for(int k = 0; k < 4; k++) game.players[i].moulinID[k] = -1;
-
-        focusedVertex[i] = NULL;
-    }
-
-    for(int i = 0; i < MAX_VERTICES; i++)
-    {
-        vertices[i]->owner = NULL;
-
-        setPawnVisibilityState(vertices[i], 0);
-    }
-
-    for(int i = 0; i < MAX_LINES; i++)
-        Lines[i][3] = LINE_INACTIVE;
-
-    partyState = 0; // phase actuel de la partie (placement, mouvement, saut)
-    count = 1; // temps du jeu en seconde
-    pass = 0;
-    lastTime = 0;
-    randomPlayer = -1; // premier joueur à jouer
-
-    SDL_RemoveTimer(timer1s);
-
-    Mix_PauseMusic();
-
-    printf("\tPartie redemarre.\n");
-}
-
 void resetTexts()
 {
     changeTextValue(turnText, "Tour:");
@@ -1425,53 +888,6 @@ void resetTexts()
     changeTextValue(gameText, "Etat du jeu");
     changeTextValue(countdownText, "0s");
     changeTextValue(randomPlayerText, "randomPlayer");
-}
-
-int moulinCanBeFormed(int id, int line, Vertex* vertices[], int Lines[][4])
-{
-    int u, cmp;
-    cmp = 0;
-
-    for(int p = 0; p < 3; p++)
-    {
-        u = Lines[line][p];
-
-        if(vertices[u]->owner == &(game.players[id]))
-            cmp++;
-
-        else if(vertices[u]->owner == &(game.players[1-id]))
-            cmp--;
-    }
-
-    if(cmp == 2)
-        return 1;
-
-    return 0;
-}
-
-int searchOpportunity(int ai, int* u, int* v)
-{
-    for(int i = 0; i < MAX_LINES; i++)
-    {
-        if(Lines[i][3] != LINE_INACTIVE) continue;
-
-        if(moulinCanBeFormed(ai, i, vertices, Lines))
-        {
-            printf("\t[CanBeFormed] %d\n", i);
-
-            for(int k = 0; k < MAX_VERTICES; k++) if(vertices[k]->owner == &game.players[ai])
-            {
-                if(isVertexAdjacentToLine(vertices[k], i, v, vertices, Lines, Adjacency))
-                    if(k != *v && vertices[*v]->owner == NULL && Adjacency[*v][k] == 1)
-                    {
-                        *u = k;
-                        return 1;
-                    }
-            }
-        }
-    }
-
-    return 0;
 }
 
 void displayErrorScreen(int id)
@@ -1553,11 +969,11 @@ static int onlineFunction(void* params)
 
     SOCKADDR_IN from = { 0 };
 
-    #ifdef WIN32 /* si vous êtes sous Windows */
+    #ifdef WIN32
 
     int fromsize = sizeof from;
 
-    #elif defined (linux) /* si vous êtes sous Linux */
+    #elif defined (linux)
 
     socklen_t fromsize = sizeof from;
 
@@ -1735,19 +1151,8 @@ static int drawingFunction(void* params)
     return 1;
 }
 
-/*
-static int eventsFunction(void* params)
-{
-    return 1;
-}
-
-static int loadingFunction(void* params)
-{
-    return 1;
-}*/
-
-///
-//id: id du joueur actuel
+/// Le gestionnaire des pions verifie l'état des pions à chaque tour.
+//id: id du joueur jouant actuel
 void VerticesManager(int id)
 {
     SDL_Rect rect;
@@ -1781,8 +1186,8 @@ void MoulinPhase(int id, int i)
     if(vertices[i]->owner != NULL && vertices[i]->owner == &game.players[1-id])
     {
         //if(vertices[i]->moulin == 1)
-        if(isVertexOnMoulin(vertices[i], Lines) != -1)
-            printf("Vous ne pouvez pas supprimer un pion qui fait partie d'un moulin. (%d)\n", isVertexOnMoulin(vertices[i],
+        if(isVertexInMoulin(vertices[i], Lines) != -1)
+            printf("Vous ne pouvez pas supprimer un pion qui fait partie d'un moulin. (%d)\n", isVertexInMoulin(vertices[i],
                                                                                                                  Lines));
         else
         {
@@ -1894,8 +1299,8 @@ void MouvementPhase(int id, int i)
             {
                 int vertex =  focusedVertex[id]->id;
 
-                printf("\tisVertexOnMoulin %d", isVertexOnMoulin(vertices[j], Lines));
-                if(isVertexOnMoulin(vertices[j], Lines) != -1)
+                printf("\n\tisVertexInMoulin %d", isVertexInMoulin(vertices[j], Lines));
+                if(isVertexInMoulin(vertices[j], Lines) != -1)
                         deleteMoulins(vertices[j], Lines);
 
                 movePawn(&game.players[id], focusedVertex[id], vertices[i]);
@@ -1982,8 +1387,8 @@ void MouvementPhase(int id, int i)
             {
                 int vertex = focusedVertex[id]->id;
 
-                printf("\tisVertexOnMoulin %d", isVertexOnMoulin(vertices[j], Lines));
-                if(isVertexOnMoulin(vertices[j], Lines) != -1)
+                printf("\nisVertexInMoulin %d", isVertexInMoulin(vertices[j], Lines));
+                if(isVertexInMoulin(vertices[j], Lines) != -1)
                     deleteMoulins(vertices[j], Lines);
 
                 movePawn(&game.players[id], focusedVertex[id], vertices[i]);
@@ -2012,10 +1417,6 @@ void MouvementPhase(int id, int i)
                 else if(game.type == GAME_TYPE_PvP_ONLINE)
                 {
                     char message[8];
-
-                    //vertexOwnerMessage(message, id, i);
-
-                    //sendMessage(message, 5);
 
                     SOCKET sock = socket(AF_INET, SOCK_DGRAM, 0);
                     if(sock == INVALID_SOCKET)
@@ -2178,7 +1579,6 @@ void WidgetsManager()
     // Si le joueur fait un clique gauche dans le menu "demarrage"
     if(menu == MENU_START)
     {
-        //printf("I=%d\n", i);
         if(i == 1+2) // Jouer
             menu = MENU_SETTINGS;
 
@@ -2366,7 +1766,7 @@ void WidgetsManager()
             // Les identifiants des widgets commencent de 2 jusqu'à MAX_WIDGETS, d'où le +2.
             case 3+2: // Recommencer la partie
             {
-                resetGame();
+                resetGame(&game, game.type);
 
                 partyState = INFO_PLACEMENT;
 
@@ -2410,11 +1810,11 @@ void WidgetsManager()
                 break;
             }
 
-            case 5+2:
+            case 5+2: // quitter la partie
             {
                 game.active = 0;
 
-                resetGame();
+                resetGame(&game, GAME_TYPE_PvP);
 
 
                 menu = MENU_START;
@@ -2423,6 +1823,63 @@ void WidgetsManager()
 
         }
     }
+}
+
+
+
+void resetGame(Game* game, enum gameType type)
+{
+    initializeGame(game, type, 1);
+
+    setWidgetColor(screen[2]->widgets[2+2], white);
+    setWidgetColor(screen[2]->widgets[3+2], white);
+
+    setWidgetColor(screen[2]->widgets[1+2], green);
+    setWidgetColor(screen[2]->widgets[4+2], grey);
+    setWidgetColor(screen[2]->widgets[5+2], grey);
+    setWidgetColor(screen[2]->widgets[6+2], green);
+    setWidgetColor(screen[2]->widgets[7+2], black);
+    setWidgetClickable(screen[2]->widgets[4+2], WIDGET_NOT_CLICKABLE);
+    setWidgetClickable(screen[2]->widgets[5+2], WIDGET_NOT_CLICKABLE);
+
+    resetTexts();
+
+    for(int i = 0; i < MAX_PLAYERS; i++)
+    {
+         //game.players[i].pseudo = "";
+
+        game->players[i].pawns = PLAYER_INITIAL_PAWNS;
+
+        game->players[i].activePawns = 0;
+
+        game->players[i].moulin = 0;
+
+        for(int k = 0; k < 4; k++) game->players[i].moulinID[k] = -1;
+
+        focusedVertex[i] = NULL;
+    }
+
+    for(int i = 0; i < MAX_VERTICES; i++)
+    {
+        vertices[i]->owner = NULL;
+
+        setPawnVisibilityState(vertices[i], 0);
+    }
+
+    for(int i = 0; i < MAX_LINES; i++)
+        Lines[i][3] = LINE_INACTIVE;
+
+    partyState = 0; // phase actuel de la partie (placement, mouvement, saut)
+    count = 1; // temps du jeu en seconde
+    pass = 0;
+    lastTime = 0;
+    randomPlayer = -1; // premier joueur à jouer
+
+    SDL_RemoveTimer(timer1s);
+
+    Mix_PauseMusic();
+
+    printf("\tPartie redemarre.\n");
 }
 
 void LoadPawns()
@@ -2467,3 +1924,13 @@ void DrawConfigTexts()
             drawText(gameConfigText[i]);
         }
 }
+
+/***Pour réduire la taille de main.c, quelques fonctions utilisés seulement dans le main()
+    ont été transferé vers les fichiers suivantes: */
+
+#include "source/ai.c"
+#include "source/moulin.c"
+
+/***On aurait pu réduire encore plus la taille du main.c en transferant le code source des fonctions vers d'autres fichiers.." **/
+
+/************************************************************** FIN *************************************************************/

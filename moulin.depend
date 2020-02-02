@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1482081915 source:c:\users\hp\desktop\jeu_de_moulin\scr\ini.c
+1580078497 source:c:\users\hp\desktop\jeu_de_moulin\scr\ini.c
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
@@ -8,7 +8,7 @@
 
 1482081915 c:\users\hp\desktop\jeu_de_moulin\scr\ini.h
 
-1579036731 source:c:\users\hp\desktop\jeu_de_moulin\scr\main.c
+1580683300 source:c:\users\hp\desktop\jeu_de_moulin\scr\main.c
 	<stdio.h>
 	<stdlib.h>
 	<time.h>
@@ -39,6 +39,8 @@
 	"map.h"
 	"situation.h"
 	"online.h"
+	"source/ai.c"
+	"source/moulin.c"
 
 1547325881 c:\users\hp\desktop\jeu_de_moulin\sdl\i686-w64-mingw32\include\sdl2\sdl_ttf.h
 	"SDL.h"
@@ -415,77 +417,75 @@
 	"begin_code.h"
 	"close_code.h"
 
-1579034857 c:\users\hp\desktop\jeu_de_moulin\scr\sprite.h
+1579537425 c:\users\hp\desktop\jeu_de_moulin\scr\sprite.h
 	"source/sprite.c"
 
 1575327432 c:\users\hp\desktop\jeu_de_moulin\scr\sprite.c
 
-1579034856 c:\users\hp\desktop\jeu_de_moulin\scr\widget.h
+1579537425 c:\users\hp\desktop\jeu_de_moulin\scr\widget.h
 	"source/widget.c"
 
 1575481202 c:\users\hp\desktop\jeu_de_moulin\scr\widget.c
 
-1579031457 c:\users\hp\desktop\jeu_de_moulin\scr\screen.h
+1579537425 c:\users\hp\desktop\jeu_de_moulin\scr\screen.h
 	"source/screen.c"
 
 1577273956 c:\users\hp\desktop\jeu_de_moulin\scr\screen.c
 
-1579031374 c:\users\hp\desktop\jeu_de_moulin\scr\player.h
+1580045980 c:\users\hp\desktop\jeu_de_moulin\scr\player.h
 	"source/player.c"
 
 1575893254 c:\users\hp\desktop\jeu_de_moulin\scr\player.c
 
-1579035606 c:\users\hp\desktop\jeu_de_moulin\scr\ai.h
-	"source/ai.c"
+1580160614 c:\users\hp\desktop\jeu_de_moulin\scr\ai.h
 
 1575058175 c:\users\hp\desktop\jeu_de_moulin\scr\ai.c
 
-1579031457 c:\users\hp\desktop\jeu_de_moulin\scr\vertex.h
+1579537425 c:\users\hp\desktop\jeu_de_moulin\scr\vertex.h
 	"source/vertex.c"
 
 1575657414 c:\users\hp\desktop\jeu_de_moulin\scr\vertex.c
 
-1579031400 c:\users\hp\desktop\jeu_de_moulin\scr\pawn.h
+1579537425 c:\users\hp\desktop\jeu_de_moulin\scr\pawn.h
 	"source/pawn.c"
 
 1575483096 c:\users\hp\desktop\jeu_de_moulin\scr\pawn.c
 
-1579032569 c:\users\hp\desktop\jeu_de_moulin\scr\moulin.h
-	"source/moulin.c"
+1580161084 c:\users\hp\desktop\jeu_de_moulin\scr\moulin.h
 
 1575657088 c:\users\hp\desktop\jeu_de_moulin\scr\moulin.c
 
-1579031349 c:\users\hp\desktop\jeu_de_moulin\scr\game.h
+1580554227 c:\users\hp\desktop\jeu_de_moulin\scr\game.h
 	"source/game.c"
 
 1577481294 c:\users\hp\desktop\jeu_de_moulin\scr\game.c
 
-1579031974 c:\users\hp\desktop\jeu_de_moulin\scr\text.h
+1580078497 c:\users\hp\desktop\jeu_de_moulin\scr\text.h
 	"source/text.c"
 
 1575212288 c:\users\hp\desktop\jeu_de_moulin\scr\text.c
 
-1579031357 c:\users\hp\desktop\jeu_de_moulin\scr\countdown.h
+1579537425 c:\users\hp\desktop\jeu_de_moulin\scr\countdown.h
 	"source/countdown.c"
 
 1575219113 c:\users\hp\desktop\jeu_de_moulin\scr\countdown.c
 
-1579032584 c:\users\hp\desktop\jeu_de_moulin\scr\map.h
+1580254024 c:\users\hp\desktop\jeu_de_moulin\scr\map.h
 	"source/map.c"
 
 1575890332 c:\users\hp\desktop\jeu_de_moulin\scr\map.c
 
-1579032110 c:\users\hp\desktop\jeu_de_moulin\scr\situation.h
+1579537425 c:\users\hp\desktop\jeu_de_moulin\scr\situation.h
 	"source/situation.c"
 
 1577267937 c:\users\hp\desktop\jeu_de_moulin\scr\situation.c
 
-1579032222 c:\users\hp\desktop\jeu_de_moulin\scr\online.h
+1579537425 c:\users\hp\desktop\jeu_de_moulin\scr\online.h
 	"source/online.c"
 
 1577533331 c:\users\hp\desktop\jeu_de_moulin\scr\online.c
 
-1575058175 c:\users\hp\desktop\jeu_de_moulin\scr\source\ai.c
+1580554174 c:\users\hp\desktop\jeu_de_moulin\scr\source\ai.c
 
 1575327432 c:\users\hp\desktop\jeu_de_moulin\scr\source\sprite.c
 
@@ -493,23 +493,23 @@
 
 1577273956 c:\users\hp\desktop\jeu_de_moulin\scr\source\screen.c
 
-1575893254 c:\users\hp\desktop\jeu_de_moulin\scr\source\player.c
+1580078497 c:\users\hp\desktop\jeu_de_moulin\scr\source\player.c
 
 1575657414 c:\users\hp\desktop\jeu_de_moulin\scr\source\vertex.c
 
 1575483096 c:\users\hp\desktop\jeu_de_moulin\scr\source\pawn.c
 
-1575657088 c:\users\hp\desktop\jeu_de_moulin\scr\source\moulin.c
+1580161149 c:\users\hp\desktop\jeu_de_moulin\scr\source\moulin.c
 
-1577481294 c:\users\hp\desktop\jeu_de_moulin\scr\source\game.c
+1580554291 c:\users\hp\desktop\jeu_de_moulin\scr\source\game.c
 
-1575212288 c:\users\hp\desktop\jeu_de_moulin\scr\source\text.c
+1580078497 c:\users\hp\desktop\jeu_de_moulin\scr\source\text.c
 
 1575219113 c:\users\hp\desktop\jeu_de_moulin\scr\source\countdown.c
 
 1575890332 c:\users\hp\desktop\jeu_de_moulin\scr\source\map.c
 
-1579032010 c:\users\hp\desktop\jeu_de_moulin\scr\source\situation.c
+1580045980 c:\users\hp\desktop\jeu_de_moulin\scr\source\situation.c
 
 1577533331 c:\users\hp\desktop\jeu_de_moulin\scr\source\online.c
 

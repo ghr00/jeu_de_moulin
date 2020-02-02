@@ -6,6 +6,11 @@ Description : Tout ce qui concerne le plateau du jeu est declaré ici.
 #ifndef MAP_H
 #define MAP_H
 
+#define MAX_SQUARES 3 // Nombre de rectangle formant le plateau du jeu
+
+void initializeSquares(SDL_Renderer* renderer);
+void drawMap(SDL_Renderer* rendrer);
+
 /** Matrice d'adjacence du plateau du jeu
     Propriétés  :   1. Elle est symetrique.
                     2. Si Adjacency[i][j] = 1, alors il existe un chemin entre le sommet i et sommet j.
